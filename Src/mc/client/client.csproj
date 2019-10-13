@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>msgp.mc.client</RootNamespace>
+    <AssemblyName>msgp.mc.client</AssemblyName>
+  </PropertyGroup>
+
+</Project>
