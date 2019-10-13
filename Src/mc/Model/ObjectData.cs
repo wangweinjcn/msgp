@@ -54,76 +54,9 @@ namespace msgp.mc.model
         {
             return typeof(object);
         }
-        public virtual datatypeEnum GetDatatypeEnum()
-        {
-            var name = this.GetType().Name;
-            datatypeEnum dtenum = datatypeEnum.stringMcObject;
-            try
-            {
-                dtenum = (datatypeEnum)Enum.Parse(typeof(datatypeEnum), name);
-            }
-            catch (Exception ex)
-            {
-               
-                return dtenum;
-            }
-            return dtenum;
-        }
+       
     }
-    [MessagePackObject]
-    public class dtMcObject : baseMcObject
-    {
-       [Key(3)]
-        public DateTime data;
-    }
-    [MessagePackObject]
-    public class boolMcObject : baseMcObject
-    {
-       [Key(3)]
-        public bool data;
-    }
-    [MessagePackObject]
-    public class intMcObject : baseMcObject
-    {
-       [Key(3)]
-        public long data;
-    }
-    [MessagePackObject]
-    public class doubleMcObject : baseMcObject
-    {
-       [Key(3)]
-        public double data;
-    }
-    [MessagePackObject]
-    public class decimalMcObject : baseMcObject
-    {
-       [Key(3)]
-        public decimal data;
-    }
-    [MessagePackObject]
-    public class stringMcObject : baseMcObject
-    {
-       [Key(3)]
-        public string data;
-    }
-    [MessagePackObject]
-    public class listMcObject : baseMcObject
-    {
-       [Key(3)]
-        public ArrayList data;
-    }
-    [MessagePackObject]
-    public class mapMcObject : baseMcObject
-    {
-       [Key(3)]
-        public Hashtable data;
-    }
-    [MessagePackObject]
-    public class dynamicMcObject : baseMcObject
-    {
-       [Key(3)]
-        public dynamic data;
-    }
+    
 
      [MessagePackObject]
     public class testobject<T>
