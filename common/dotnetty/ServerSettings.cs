@@ -9,18 +9,19 @@ namespace msgp.common.dotnetty
         {
             get
             {
-                string ssl = ExampleHelper.Configuration["ssl"];
+                string ssl = dotneetyCommonHelper.Configuration["ssl"];
                 return !string.IsNullOrEmpty(ssl) && bool.Parse(ssl);
             }
         }
 
-        public static int Port => int.Parse(ExampleHelper.Configuration["port"]);
+        public static int Port => int.Parse(dotneetyCommonHelper.Configuration["port"]);
+        public static int httpPort => int.Parse(dotneetyCommonHelper.Configuration["httpport"]);
 
         public static bool UseLibuv
         {
             get
             {
-                string libuv = ExampleHelper.Configuration["libuv"];
+                string libuv = dotneetyCommonHelper.Configuration["libuv"];
                 return !string.IsNullOrEmpty(libuv) && bool.Parse(libuv);
             }
         }

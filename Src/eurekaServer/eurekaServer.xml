@@ -1,0 +1,382 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>eurekaServer</name>
+    </assembly>
+    <members>
+        <member name="T:eurekaServer.Areas.Controllers.appsController">
+            <summary>
+            跨境仓库对接销售平台请求控制器
+            </summary>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.appsController.OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext)">
+            <summary>
+            
+            </summary>
+            <param name="filterContext"></param>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.appsController.addInstance(System.String)">
+            <summary>
+            Register new application instance
+            </summary>
+            <param name="appid"></param>
+            <returns></returns>
+        </member>
+        <member name="T:FrmLib.Extend.AccessHost">
+            <summary>
+            基于主机地址的黑白名单判断
+            </summary>
+        </member>
+        <member name="M:FrmLib.Extend.BlockControllers.#ctor">
+            <summary>
+            初始化一个块的所有controller（例如一个区域，或者一个设备）
+            </summary>
+            <param name="useBlack">true使用黑名单（默认）</param>
+        </member>
+        <member name="F:FrmLib.Extend.roleBlockControllers.blocks">
+            <summary>
+            基于角色的控制器块
+            </summary>
+        </member>
+        <member name="T:FrmLib.Extend.AllAreas_ht">
+            <summary>
+            对于用户访问列表，基于area的key分组
+            对于设备访问列表，基于设备的key进行分组
+            如果不使用key，默认key值为-1(字符串)
+            
+            </summary>
+        </member>
+        <member name="T:FrmLib.Extend.baseAccess_auth">
+            <summary>
+            对于设备还是用户的判定，对于http，基于请求头的DeviceToken,
+            </summary>
+        </member>
+        <member name="F:FrmLib.Extend.baseAccess_auth._itemName">
+            <summary>
+            基于设备（deviceApi）还是基于用户（userApi）的判断
+            </summary>
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.GetWorkDirectory">
+            <summary>  
+            得到程序工作目录  
+            </summary>  
+            <returns></returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.IsEmptyString(System.String)">
+            <summary>  
+            判断字符串是否为空串  
+            </summary>  
+            <param name="szString">目标字符串</param>  
+            <returns>true:为空串;false:非空串</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.CreateXmlFile(System.String,System.String)">
+            <summary>  
+            创建一个制定根节点名的XML文件  
+            </summary>  
+            <param name="szFileName">XML文件</param>  
+            <param name="szRootName">根节点名</param>  
+            <returns>bool</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.GetXmlDocument(System.String)">
+            <summary>  
+            从XML文件获取对应的XML文档对象  
+            </summary>  
+            <param name="szXmlFile">XML文件</param>  
+            <returns>XML文档对象</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.SaveXmlDocument(System.Xml.XmlDocument,System.String)">
+            <summary>  
+            将XML文档对象保存为XML文件  
+            </summary>  
+            <param name="clsXmlDoc">XML文档对象</param>  
+            <param name="szXmlFile">XML文件</param>  
+            <returns>bool:保存结果</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.SelectXmlNode(System.Xml.XmlNode,System.String)">
+            <summary>  
+            获取XPath指向的单一XML节点  
+            </summary>  
+            <param name="clsRootNode">XPath所在的根节点</param>  
+            <param name="szXPath">XPath表达式</param>  
+            <returns>XmlNode</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.SelectXmlNodes(System.Xml.XmlNode,System.String)">
+            <summary>  
+            获取XPath指向的XML节点集  
+            </summary>  
+            <param name="clsRootNode">XPath所在的根节点</param>  
+            <param name="szXPath">XPath表达式</param>  
+            <returns>XmlNodeList</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.CreateXmlNode(System.Xml.XmlNode,System.String)">
+            <summary>  
+            创建一个XmlNode并添加到文档  
+            </summary>  
+            <param name="clsParentNode">父节点</param>  
+            <param name="szNodeName">结点名称</param>  
+            <returns>XmlNode</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.SetXmlAttr(System.Xml.XmlNode,System.String,System.String)">
+            <summary>  
+            设置指定节点中指定属性的值  
+            </summary>  
+            <param name="parentNode">XML节点</param>  
+            <param name="szAttrName">属性名</param>  
+            <param name="szAttrValue">属性值</param>  
+            <returns>bool</returns>  
+        </member>
+        <member name="M:FrmLib.Extend.xmlTools.GetXmlAttr(System.Xml.XmlNode,System.String)">
+            <summary>  
+            获取指定节点中指定属性的值  
+            </summary>  
+            <param name="parentNode">XML节点</param>  
+            <param name="szAttrName">属性名</param>  
+            <returns>bool</returns>  
+        </member>
+        <member name="T:FrmLib.web.ConcurrentstackDic`1.dataPack">
+            <summary>
+            数据包裹
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.ConcurrentstackDic`1.startdt">
+            <summary>
+            启动时间
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.ConcurrentstackDic`1.getCount">
+            <summary>
+            请求个数
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.ConcurrentstackDic`1.removeCount">
+            <summary>
+            换出个数
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.ConcurrentstackDic`1.cacheObjectCount">
+            <summary>
+            缓存对象个数
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.ConcurrentstackDic`1.cacheSizeMemory">
+            <summary>
+            缓存数据大小
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.ConcurrentstackDic`1.reInitCount">
+            <summary>
+            初始化次数
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.classViewData.jsonvalue">
+            <summary>
+            类的字段及默认值
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.classViewData.Disp">
+            <summary>
+            字段显示信息
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.classViewData.Rules">
+            <summary>
+            字段验证规则
+            </summary>
+        </member>
+        <member name="P:FrmLib.web.classViewData.DisableFields">
+            <summary>
+            不允许编辑字段列表，字符串数组
+            </summary>
+        </member>
+        <member name="T:FrmLib.web.SwaggerAddEnumDescriptions">
+            <summary>
+            老版本的，
+            </summary>
+        </member>
+        <member name="T:FrmLib.web.EnumDocumentFilter">
+            <summary>
+            Add enum value descriptions to Swagger
+            </summary>
+        </member>
+        <member name="M:FrmLib.web.EnumDocumentFilter.Apply(Swashbuckle.AspNetCore.Swagger.SwaggerDocument,Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext)">
+            <inheritdoc />
+        </member>
+        <member name="M:FrmLib.web.baseStartup.initOtherConfig(Microsoft.AspNetCore.Builder.IApplicationBuilder,Microsoft.AspNetCore.Hosting.IHostingEnvironment)">
+            <summary>
+            用于扩展Configure中使用的函数
+            </summary>
+            <param name="env"></param>
+        </member>
+        <member name="M:FrmLib.web.baseStartup.initOtherServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            用于扩展需要在ConfigureServices中使用的功能
+            </summary>
+            <param name="services"></param>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.ReturnNeedLogin(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            not authorized request
+            401返回码，表示需要登录
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.ReturnNoAuthorized(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            not authorized request
+            403返回码，表示无权限
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.ReturnSystemError(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            system error request 
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.ReturnTimeOut(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            timeout request 
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.CheckApplication(Microsoft.AspNetCore.Http.HttpContext,System.String,System.String)">
+            <summary>
+            check the application
+            </summary>
+            <param name="context"></param>
+            <param name="applicationId"></param>
+            <param name="applicationPassword"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.CheckExpiredTime(System.Double,System.Double)">
+            <summary>
+            check the expired time
+            </summary>
+            <param name="timestamp"></param>
+            <param name="expiredSecond"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.GetInvoke(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            http get invoke
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.PostInvoke(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            http post invoke
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.Check(Microsoft.AspNetCore.Http.HttpContext,Ace.Web.Mvc.Middlewares.RequestInfo)">
+            <summary>
+            the main check method
+            </summary>
+            <param name="context"></param>
+            <param name="requestInfo"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedMiddleware.GetAllApplications">
+            <summary>
+            return the application infomations
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedServicesExtensions.AddApiAuthorized(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Add response compression services.
+            </summary>
+            <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> for adding services.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.Middlewares.ApiAuthorizedServicesExtensions.AddApiAuthorized(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Ace.Web.Mvc.Middlewares.ApiAuthorizedOptions})">
+            <summary>
+            Add response compression services and configure the related options.
+            </summary>
+            <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> for adding services.</param>
+            <param name="configureOptions">A delegate to configure the <see cref="!:ResponseCompressionOptions"/>.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.BaseController.DisposeMembers">
+            <summary>
+            扫描对象内所有带有 DisposableAttribute 标记并实现了 IDisposable 接口的属性和字段，执行其 Dispose() 方法
+            </summary>
+        </member>
+        <member name="M:Ace.Web.Mvc.HttpGlobalAuthFilter.ReturnNeedLogin(Microsoft.AspNetCore.Mvc.Filters.AuthorizationFilterContext)">
+            <summary>
+            not authorized request
+            401返回码，表示需要登录
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.HttpGlobalAuthFilter.ReturnNoAuthorized(Microsoft.AspNetCore.Mvc.Filters.AuthorizationFilterContext)">
+            <summary>
+            not authorized request
+            403返回码，表示无权限
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.HttpGlobalAuthFilter.ReturnSystemError(Microsoft.AspNetCore.Mvc.Filters.AuthorizationFilterContext)">
+            <summary>
+            system error request 
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Ace.Web.Mvc.HttpGlobalExceptionFilter.LogException(Microsoft.AspNetCore.Mvc.Filters.ExceptionContext)">
+            <summary>
+             将错误记录进日志
+            </summary>
+            <param name="filterContext"></param>
+        </member>
+        <member name="M:Ace.Web.Mvc.Common.VierificationCodeServices.RndNum(System.Int32)">
+            <summary>  
+            该方法用于生成指定位数的随机数  
+            </summary>  
+            <param name="VcodeNum">参数是随机数的位数</param>  
+            <returns>返回一个随机数字符串</returns>  
+        </member>
+        <member name="M:Ace.Web.Mvc.Common.VierificationCodeServices.Create(System.String@,System.Int32)">
+            <summary>  
+            该方法是将生成的随机数写入图像文件  
+            </summary>  
+            <param name="code">code是一个随机数</param>
+            <param name="numbers">生成位数（默认4位）</param>  
+        </member>
+        <member name="P:Ace.PagedJObjData.total">
+            <summary>
+            vuetable-2 use;
+             total number of records available
+            </summary>
+        </member>
+        <member name="P:Ace.PagedData`1.total">
+            <summary>
+            vuetable-2 use;
+             total number of records available
+            </summary>
+        </member>
+        <member name="T:Ace.Pagination">
+            <summary>
+            分页信息
+            </summary>
+        </member>
+        <member name="P:Ace.Pagination.Page">
+            <summary>
+            当前页
+            </summary>
+        </member>
+        <member name="P:Ace.Pagination.PageSize">
+            <summary>
+            页大小
+            </summary>
+        </member>
+    </members>
+</doc>

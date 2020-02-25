@@ -6,17 +6,32 @@ namespace msgp.mc.model
 {
     public enum datatypeEnum
     {
-        dtMcObject=0,
-        boolMcObject=10,
-        intMcObject=20,
-        doubleMcObject=30,
-        decimalMcObject=40,
-        stringMcObject=50,
-        listMcObject=60,
-        mapMcObject=70,
-        dynamicMcObject=80,
-            unknown=-1
-        
+      
+        system_int = 0,
+        system_int32 = 10,
+        system_int16 = 20,
+        system_int64 = 30,
+        system_long = 40,
+        system_int_array= 50,
+        system_int32_array= 60,
+        system_int16_array= 70,
+        system_int64_array= 80,
+        system_long_array = 90,
+        system_string = 100,
+        system_bool = 110,
+        system_byte = 120,
+        system_float = 130,
+        system_double = 140,
+        system_decimal = 150,
+        system_decimal_array= 160,
+        system_double_array= 170,
+        system_float_array= 180,
+        system_byte_array= 190,
+        system_bool_array= 200,
+        system_string_array= 210,
+        system_collections_arraylist = 220,
+        system_collections_hashtable = 230,
+
     }
     public class mcObject<T>:baseMcObject
     {
@@ -33,6 +48,12 @@ namespace msgp.mc.model
         public override Type getDataType()
         {
             return typeof(T);
+
+        }
+        public  static object  toObject()
+        {
+
+            return null;
 
         }
     }
@@ -54,19 +75,18 @@ namespace msgp.mc.model
         {
             return typeof(object);
         }
-       
+
+
     }
     
 
-     [MessagePackObject]
+
     public class testobject<T>
-    { [Key(0)]
+    {
+        public string fttype;
         public int f1 = 0;
-         [Key(1)]
         public float f2 = 1.0F;
-         [Key(2)]
         public string f3 = "test";
-         [Key(3)]
         public T ft;
         public testobject()
             {
@@ -74,16 +94,16 @@ namespace msgp.mc.model
             {
                 object[] paramObject = new object[] { };
                 ft = (T)Activator.CreateInstance(typeof(T), paramObject);
+               
             }
+            fttype = typeof(string).ToString();
         }
 
     }
-      [MessagePackObject]
+    
     public class testobject2
     {
-        [Key(0)]
         public string f1="tobject2";
-        [Key(1)]
         public string f2="test object2";
     }
 }

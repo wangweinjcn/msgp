@@ -11,17 +11,10 @@ namespace msgp.mc.server.data
     public class dataShard
     {
         /// <summary>
-        /// 文件名
+        /// 检查过期时间间隔，单位秒
         /// </summary>
-        public string filename {  get; private set; }
-        /// <summary>
-        /// 分片的ID，key值得md5转整形，然后按分片总数取余数
-        /// </summary>
-        public int shardNO{  get; private set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int saveTimeSpan{  get; private set; }
+        private int checkExpireSecond = 50;
+       
         /// <summary>
         /// 
         /// </summary>
@@ -37,34 +30,85 @@ namespace msgp.mc.server.data
         /// <summary>
         /// 按数据类型分组对象
         /// </summary>
-        private ConcurrentDictionary<Type, List<baseMcObject>> _typeListDic;
+        private ConcurrentDictionary<string, List<baseMcObject>> _typeListDic;
         /// <summary>
         /// 对象过期时间分组字典，时间结构(yyyymmddhhMM),到分钟为单位
         /// </summary>
         private ConcurrentDictionary<string, List<baseMcObject>> _expireListDic;
 
+        private bool checking = false;
+        private object _lock = new object();
+        private void checkExpire(Object state, System.Timers.ElapsedEventArgs e)
+        {
+            if (checking)
+                return;
+            lock (_lock)
+            {
+                if (checking)
+                    return;
+                checking = true;
+            }
+            try
+            {
+                var nowstr = long.Parse(DateTime.Now.ToString("yyyyMMddHHmm"));
+                foreach (var obj in _expireListDic)
+                {
+                    var tmp = long.Parse(obj.Key);
+                    if (tmp > nowstr)
+                        continue;
+                    var list1 = obj.Value;
+                    foreach (var onedata in list1)
+                    {
+                        baseMcObject outdata;
+                        _dataDic.Remove(onedata.key, out outdata);
+                        var dtenum = outdata.getDataType().ToString();
+
+                        var list = _typeListDic[dtenum];
+                        list.Remove(onedata);
+
+                    }
+                    List<baseMcObject> outd;
+                    _expireListDic.Remove(obj.Key, out outd);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                
+            }
+            finally
+            {
+                checking = false;
+            }
+        }
+        System.Timers.Timer checkExpireTimer;
+
+       
+
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="fn">文件名</param>
-        /// <param name="no">分片号</param>
-        /// <param name="savets">保存间隔，单位秒</param>
-        public dataShard(string fn,int no,int savets)
+
+        public dataShard()
         {
-            this.filename = fn;
-            this.shardNO = no;
-            this.saveTimeSpan = savets;
+
             _dataDic = new ConcurrentDictionary<string, baseMcObject>();
             _expireListDic = new ConcurrentDictionary<string, List<baseMcObject>>();
-            _typeListDic = new ConcurrentDictionary<Type, List<baseMcObject>>();
+            _typeListDic = new ConcurrentDictionary<string, List<baseMcObject>>();
+
+            checkExpireTimer = new System.Timers.Timer(this.checkExpireSecond*1000);
+            checkExpireTimer.Elapsed += new System.Timers.ElapsedEventHandler(checkExpire);
+            checkExpireTimer.AutoReset = true;
+            checkExpireTimer.Start();
+
         }
-        public void delete(string key)
+        public bool delete(string key)
         {
             if (!_dataDic.ContainsKey(key))
-                return;
+                return false;
             baseMcObject outdata;
             _dataDic.Remove(key, out outdata);
-            var dtenum = outdata.getDataType();
+            var dtenum = outdata.getDataType().ToString();
            
             var list = _typeListDic[dtenum];
             list.Remove(outdata);
@@ -74,6 +118,7 @@ namespace msgp.mc.server.data
                 list = _expireListDic[expstr];
                 list.Remove(outdata);
             }
+            return true;
         }
         public baseMcObject get(string key)
         {
@@ -86,28 +131,40 @@ namespace msgp.mc.server.data
             }
             return res;
         }
-        public void add(string key, baseMcObject data)
+        public bool addLock(string key,DateTime expirets)
         {
             if (string.IsNullOrEmpty(key))
-                return;
-            if (data == null)
-                return;
-            if (key != data.key)
-                return;
-            baseMcObject oldobj=null;
+                return false;
             if (_dataDic.ContainsKey(key))
-                oldobj = _dataDic[key];
-           
-             datatypeEnum dtenum = data.GetDatatypeEnum();
+                return false;
+            baseMcObject data = new baseMcObject();
+            data.key = key;
+            data.isock = true;
+            data.expirets =expirets;
+            return this.add(data);
+
+        }
+        public bool add(baseMcObject data)
+        {
+            if (string.IsNullOrEmpty(data.key))
+                return false;
+            if (data == null)
+                return false;
+          
+            baseMcObject oldobj=null;
+            if (_dataDic.ContainsKey(data.key))
+                oldobj = _dataDic[data.key];
+
+            var dType = data.getDataType().ToString();
             if (oldobj != null)
             {
                 delete(oldobj.key);
                
             }
-            _dataDic.AddOrUpdate(key, data,(Key, value) => value);
-            if (!_typeListDic.ContainsKey(dtenum))
-                _typeListDic.AddOrUpdate(dtenum, new List<baseMcObject>(), (Key, value) => value);
-            var list = _typeListDic[dtenum];
+            _dataDic.AddOrUpdate(data.key, data,(Key, value) => value);
+            if (!_typeListDic.ContainsKey(dType))
+                _typeListDic.AddOrUpdate(dType, new List<baseMcObject>(), (Key, value) => value);
+            var list = _typeListDic[dType];
             list.Add(data);
             string expstr = data.expirets.ToString("yyyyMMddHHmm");
             if (!_expireListDic.ContainsKey(expstr))
@@ -116,39 +173,12 @@ namespace msgp.mc.server.data
             }
             list = _expireListDic[expstr];
             list.Add(data);
-            //switch (dtenum)
-            //{
-            //    case (datatypeEnum.boolMcObject):
-            //        break;
-            //    case (datatypeEnum.decimalMcObject):
-            //        break;
-            //    case (datatypeEnum.doubleMcObject):
-            //        break;
-            //    case (datatypeEnum.dtMcObject):
-            //        break;
-            //    case (datatypeEnum.dynamicMcObject):
-            //        break;
-            //    case (datatypeEnum.intMcObject):
-            //        break;
-            //    case (datatypeEnum.listMcObject):
-            //        break;
-            //    case (datatypeEnum.mapMcObject):
-            //        break;
-            //    case (datatypeEnum.stringMcObject):
-            //        break;
-            //}
+            return true;
         }
 
-        public void saveToFile()
+        public ConcurrentDictionary<string, List<baseMcObject>>  gettypeListDic()
         {
-            Dictionary<Type, byte[]> saveDic = new Dictionary<Type, byte[]>();
-            foreach (var obj in _typeListDic)
-            {
-                byte[] datalist = MessagePackSerializer.Serialize(obj.Value,MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-                saveDic.Add(obj.Key, datalist);
-            }
-            var allbin = MessagePackSerializer.Serialize(saveDic,MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            File.WriteAllBytes(filename, allbin);
+            return this._typeListDic;
 
         }
     }

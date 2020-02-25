@@ -1,0 +1,652 @@
+﻿{
+  "Name": "SysUser",
+  "FullName": "Application.Model.Base.SysUser",
+  "ID": "a85115fa-5ccf-4197-8fde-cfdf7f4d3f25",
+  "mainColCountPerRow": 2,
+  "ModelKeyName":"Id" ,
+  "struct": [
+    {
+      "Name": "SysUser.Id",
+      "Id": "SysUser_ID",
+      "Disable": true,
+      "isTableFields": true,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "integer",
+          "trigger": "blur",
+          "message": "请输入整数"
+        }
+      ],
+      "Disp": "",
+      "Value": -1
+    },
+    {
+      "Name": "SysUser.Email",
+      "Id": "0ac2e81b-0e1d-40d3-b4cc-b82974daf73c",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 2,
+      "Rules": [
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "长度错误",
+          "min": 6,
+          "max": 100
+        },
+        {
+          "type": "email",
+          "trigger": "blur",
+          "message": "电子邮箱格式错误"
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.LoginId",
+      "Id": "3ac8c883-9a89-4b2d-bab0-2720e207e3e2",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 1,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.Mobile",
+      "Id": "6047377c-088c-4921-9284-4d995beea09b",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 4,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "number",
+          "trigger": "blur",
+          "message": "电话号码格式错误"
+        },
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 12
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.Password",
+      "Id": "69e16c6e-1dd3-4154-bb44-03777ba3e0ef",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 225
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.IsEnabled",
+      "Id": "6bcd9db5-a52d-427d-8744-64a71e190bb1",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 2,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        }
+      ],
+      "Disp": "",
+      "Value": false
+    },
+    {
+      "Name": "SysUser.UserType",
+      "Id": "772ec9d8-fe52-46ff-bd08-9eb1d03fd91c",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 7,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "integer",
+          "trigger": "blur",
+          "message": "请输入整数"
+        }
+      ],
+      "Disp": "用户类型;0:系统用户；1：后台管理账号；2：客户",
+      "Value": -1
+    },
+    {
+      "Name": "SysUser.Birthday",
+      "Id": "80ddab6e-e820-4cb3-aa41-945fb11052ad",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.PhotoUrl",
+      "Id": "a23bd072-b073-43dd-ad5e-94dc34b64a11",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "url",
+          "trigger": "blur",
+          "message": "The {0} field is not a valid fully-qualified http, https, or ftp URL."
+        },
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 225
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.ComName",
+      "Id": "a784326d-cfd2-4681-84e7-18a9a1aec8c9",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 225
+        }
+      ],
+      "Disp": "公司信息",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.loginType",
+      "Id": "bb784e7d-9bc2-4e7d-bb8a-38002c1146a0",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "trigger": "blur",
+          "message": "取值范围错误",
+          "min": "0",
+          "max": "3"
+        },
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "integer",
+          "trigger": "blur",
+          "message": "请输入整数"
+        }
+      ],
+      "Disp": "登录类型，0：本地账户；1：微信；2：QQ，",
+      "Value": -1
+    },
+    {
+      "Name": "SysUser.secretKey",
+      "Id": "c981b950-f4cf-40e1-8f43-9a6888484f48",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+
+    {
+      "Name": "SysUser.Description",
+      "Id": "d5e0bdb8-95ce-4667-9740-94657849cedc",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 225
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.LoginId",
+      "Id": "d99e433c-89b6-4e2d-9dee-cc356c6a63c0",
+      "Disable": false,
+      "isTableFields": true,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "长度错误",
+          "min": 2,
+          "max": 20
+        },
+        {
+          "type": "regexp",
+          "pattern": "^[0-9a-zA-z_]{2,20}$",
+          "trigger": "blur",
+          "message": "格式错误"
+        },
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.sex",
+      "Id": "f5f23c88-3f5f-4a6d-8283-60220e638b5f",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "trigger": "blur",
+          "message": "取值范围错误",
+          "min": "-1",
+          "max": "3"
+        },
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "integer",
+          "trigger": "blur",
+          "message": "请输入整数"
+        }
+      ],
+      "Disp": "0:女，1：男；-1未知",
+      "Value": -1
+    },
+    {
+      "Name": "SysUser.OtherLoginId",
+      "Id": "fd5ce21a-ddfc-4c81-a293-7f4fb877a4ad",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 225
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.Ass_Department",
+      "Id": "1ebef277-56d4-4f94-9344-684d4cec410a",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [],
+      "Disp": "",
+      "Value": null
+    },
+    {
+      "Name": "SysUser.Ass_Areas",
+      "Id": "58c16685-7e6b-443b-80fc-a4f1a92305ec",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [],
+      "Disp": "",
+      "Value": null
+    },
+    {
+      "Name": "SysUser.Ass_LoginHistory",
+      "Id": "d31e97fa-e443-418b-8c7d-5a50fcc5847b",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [],
+      "Disp": "",
+      "Value": null
+    },
+    {
+      "Name": "SysUser.Ass_SysRole",
+      "Id": "ea16d933-6c20-438a-9ddb-914af434c678",
+      "Disable": false,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [],
+      "Disp": "",
+      "Value": null
+    },
+    {
+      "Name": "SysUser.Ass_Account",
+      "Id": "c48ac104-5898-4ff1-94ae-9a51c4ed616e",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [],
+      "Disp": "",
+      "Value": null
+    },
+    {
+      "Name": "SysUser.UpdaterID",
+      "Id": "10943d3a-0df0-4a18-9a9a-e4ad3b1d53c4",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 20
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.UpdaterName",
+      "Id": "3f52d93b-e267-4d81-8274-88753240f48d",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.CreateDt",
+      "Id": "4d0e61b5-9672-4712-9ce5-21aed9e1da86",
+      "Disable": true,
+      "isTableFields": true,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.UpdateDt",
+      "Id": "9d510603-bb0b-434a-91a5-22b9f3ba1616",
+      "Disable": true,
+      "isTableFields": true,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.CreaterName",
+      "Id": "d0f7ee84-39da-4af8-9f2b-545619022b02",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": true,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "Disp": "创建人名字",
+      "Value": ""
+    },
+    {
+      "Name": "SysUser.CreaterID",
+      "Id": "d26b31fa-6b90-41d2-a27e-a3ad6b988d0c",
+      "Disable": true,
+      "isTableFields": false,
+      "Visible": false,
+      "rowCount": 1,
+      "colCount": 1,
+      "editorType": "",
+      "dataType": "",
+      "tabOrder": 0,
+      "Rules": [
+        {
+          "required": true,
+          "trigger": "blur",
+          "message": "必填内容"
+        },
+        {
+          "type": "string",
+          "trigger": "blur",
+          "message": "超过最大长度",
+          "min": 0,
+          "max": 20
+        }
+      ],
+      "Disp": "",
+      "Value": ""
+    }
+  ]
+}
