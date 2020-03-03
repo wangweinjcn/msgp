@@ -9,7 +9,7 @@ namespace eurekaServer.Areas
     {
         public const string eureka = "eureka";
          public const string Sdk = "Sdk";
-         public const string gserver = "gserver";
+         public const string sysconf = "sysconf";
        
     }
 }

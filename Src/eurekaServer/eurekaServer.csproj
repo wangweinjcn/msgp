@@ -67,4 +67,7 @@
     </Content>
   </ItemGroup>
 
+
+  <ProjectExtensions><VisualStudio><UserProperties configs_4appsettings_1json__JSONSchema="" /></VisualStudio></ProjectExtensions>
+
 </Project>

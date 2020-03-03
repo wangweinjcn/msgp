@@ -30,7 +30,7 @@ namespace Proxy.Comm
 {
    
     /// <summary>
-    /// 服务管理实例，一个用于转发和注册的服务器描述
+    /// 服务实例，一个用于转发和注册的服务器描述;
     /// </summary>
     public class proxyNettyServer:baseServer
     {
@@ -52,13 +52,21 @@ namespace Proxy.Comm
         [XmlIgnore]
         [JsonIgnore]
         ServerBootstrap httpbootstrap;
-        [XmlIgnore]
-        [JsonIgnore]
-        IChannel bootstrapChannel;
+    
         [XmlIgnore]
         [JsonIgnore]
         IChannel httpbootstrapChannel;
-        public async Task<ServerBootstrap> startOnePortAsync(string lport)
+
+        public  void proxyServerChanged(object sender, serverChangeEventArgs e)
+        {
+            //处理消息,本身本服务器发生的变更，不需要处理
+            if (localRunServer.Instance.ownServer == null || localRunServer.Instance.ownServer != this)
+                return;
+         
+            localRunServer.Instance.addActions(new actionMessage(enum_Actiondo.ServerChanged, this.id, localRunServer.Instance.region));
+         
+        }
+        public async Task<IChannel> startOnePortAsync(string lport)
         {
             //X509Certificate2 tlsCertificate = null;
             //if (ServerSettings.IsSsl)
@@ -76,18 +84,13 @@ namespace Proxy.Comm
                     .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
-                        //if (tlsCertificate != null)
-                        //{
-                        //    pipeline.AddLast(TlsHandler.Server(tlsCertificate));
-                        //}
 
-                        // pipeline.AddLast(new LengthFieldBasedFrameDecoder(commSetting.MAX_FRAME_LENGTH, commSetting.LENGTH_FIELD_OFFSET, commSetting.LENGTH_FIELD_LENGTH, commSetting.LENGTH_ADJUSTMENT, commSetting.INITIAL_BYTES_TO_STRIP, false));
                         pipeline.AddLast(SERVER_HANDLER);
                     }));
 
-                bootstrapChannel = await portbootstrap.BindAsync(int.Parse(lport));
+               var  bootstrapChannel = await portbootstrap.BindAsync(int.Parse(lport));
                 Console.WriteLine($"Socket started. Listening on {lport}");
-                return portbootstrap;
+                return bootstrapChannel;
 
 
 
@@ -100,7 +103,7 @@ namespace Proxy.Comm
                 throw new Exception("服务启动失败");
             }
         }
-        public async Task<ServerBootstrap> startHttpPortAsync(string lport)
+        public async Task<IChannel> startHttpPortAsync(string lport)
         {
             //X509Certificate2 tlsCertificate = null;
             //if (ServerSettings.IsSsl)
@@ -132,9 +135,9 @@ namespace Proxy.Comm
                      .ChildOption(ChannelOption.SoKeepalive, true);
 
                  httpbootstrapChannel = await httpbootstrap.BindAsync(IPAddress.IPv6Any,int.Parse( lport));
-                Console.WriteLine($"Httpd started. Listening on {bootstrapChannel.LocalAddress}");
+                Console.WriteLine($"Httpd started. Listening on {httpbootstrapChannel.LocalAddress}");
 
-                return httpbootstrap;
+                return httpbootstrapChannel;
 
 
 
@@ -155,19 +158,22 @@ namespace Proxy.Comm
             foreach (var obj in mapPortGroup_dic)
             {
                 var bs = startOnePortAsync(obj.Key).GetAwaiter().GetResult();
+                obj.Value.inputChannel = bs;
                
             }
-            startHttpPortAsync(this.port);
+           startHttpPortAsync(this.port);
         }
         public override async Task Stop()
         {
-           await bootstrapChannel.CloseAsync();
+            foreach(var obj in mapPortGroup_dic.Values)
+                 await obj.inputChannel.CloseAsync();
            Task.WaitAll(bossGroup.ShutdownGracefullyAsync(), workerGroup.ShutdownGracefullyAsync());
 
             await httpbootstrapChannel.CloseAsync();
             Task.WaitAll(httpbossGroup.ShutdownGracefullyAsync(), httpworkerGroup.ShutdownGracefullyAsync());
         }
-        public bool needReportChange { get { return _needReportChange; } set { _needReportChange = value; } }
+        
+        private bool needRestart;
         public bool PortGroupContainKey(string key)
         {
             return mapPortGroup_dic.ContainsKey(key);
@@ -190,16 +196,139 @@ namespace Proxy.Comm
             else
                 return null;
         }
+        public int mapGroupCount { get {
+
+                var count1 = (from x in maphttpGroup_dic.Values where x.status == serverStatusEnum.Ready select x).Count();
+                var count2= (from x in mapPortGroup_dic.Values where x.status == serverStatusEnum.Ready select x).Count();
+                return count1 + count2;
+            } }
+        /// <summary>
+        /// 添加转发组
+        /// </summary>
+        /// <param name="mgp">转发组对象</param>
+        public void addMapGroup(mapPortGroup mgp)
+        {
+
+            if (mgp.mapType == 0)
+            {
+                if (!mapPortGroup_dic.ContainsKey(mgp.port))
+                {
+                    mapPortGroup_dic.Add(mgp.port, mgp);
+                    mgp.inputChannel= AsyncHelpers.RunSync<IChannel>(()=> startOnePortAsync(mgp.port));
+
+                    this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "mapPortGroup_dic", null, "新增组:"+mgp.port));
+                }
+                return;
+            }
+            if(mgp.mapType==1)
+            {
+                if (!maphttpGroup_dic.ContainsKey(mgp.appkey))
+                {
+                    maphttpGroup_dic.Add(mgp.appkey, mgp);
+                      this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "maphttpGroup_dic", null, "新增组:"+mgp.appkey));
+                }
+                return;
+            }
+           
+        }
+        /// <summary>
+        /// 移除转发组
+        /// </summary>
+        /// <param name="mapKey"></param>
+        /// <param name="mapType"></param>
+        public void removeMapGroup(mapPortGroup mpg)
+        {
+            if (mpg.mapType == 0)
+            {
+                if (!mapPortGroup_dic.ContainsKey(mpg.port))
+                {
+                    mapPortGroup_dic.Remove(mpg.port);
+                    AsyncHelpers.RunSync(() => mpg.inputChannel.CloseAsync());
+                    this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "mapPortGroup_dic", null, "移除组:" + mpg.port));
+                }
+                return;
+            }
+            if (mpg.mapType == 1)
+            {
+                if (!maphttpGroup_dic.ContainsKey(mpg.appkey))
+                {
+                    maphttpGroup_dic.Remove(mpg.appkey);
+                    this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "maphttpGroup_dic", null, "移除组:" + mpg.appkey));
+                }
+                return;
+            }
+        }
+        /// <summary>
+        /// 改变端口转发组的转发端口
+        /// </summary>
+        /// <param name="mpg"></param>
+        /// <param name="newPort"></param>
+        public void changePort(mapPortGroup mpg,string newPort)
+        {
+            if (mpg.mapType != 0)
+                return;
+            if (mpg.port == newPort)
+                return;
+            if (mpg.ownServerId != this.id || !mapPortGroup_dic.ContainsKey(mpg.port) || mpg.id !=mapPortGroup_dic[mpg.port].id)
+                return;
+
+          
+            AsyncHelpers.RunSync(() => mpg.inputChannel.CloseAsync());
+            mapPortGroup_dic.Remove(mpg.port);
+            mpg.port = newPort;
+            mapPortGroup_dic.Add(newPort, mpg);
+            mpg.inputChannel=AsyncHelpers.RunSync<IChannel>(()=> startOnePortAsync(mpg.port));
+
+        }
+        /// <summary>
+        /// 改变http转发的appkey
+        /// </summary>
+        /// <param name="mpg"></param>
+        /// <param name="newKey"></param>
+        public void changeAppkey(mapPortGroup mpg, string newKey)
+        {
+            if (mpg.mapType != 1)
+                return;
+            if (mpg.appkey == newKey)
+                return;
+            if (mpg.ownServerId != this.id || !maphttpGroup_dic.ContainsKey(mpg.appkey) || mpg.id != maphttpGroup_dic[mpg.appkey].id)
+                return;
+            maphttpGroup_dic.Remove(mpg.appkey);
+            mpg.appkey = newKey;
+            maphttpGroup_dic.Add(newKey, mpg);
+        }
         /// <summary>
         /// 是否是服务器注册中心，提供服务注册与服务查询
         /// </summary>
         [JsonProperty]
-        public bool isServerRegister { get; private set; }
+        public bool isServerRegister { get { return _isServerRegister; } private set {
+                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "isServerRegister", isServerRegister, value));
+                _isServerRegister = value;
+            } }
+        private bool _isServerRegister;
+        public void enableServerRegister()
+        {
+            this.isServerRegister = true;
+        }
         /// <summary>
         /// 是否是网关中心，提供端口转发与路由功能
         /// </summary>
         [JsonProperty]
-        public bool isServerGater { get; private set; }
+        public bool isServerGater { get { return _isServerGater; } private set {
+                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "isServerGater", isServerGater, value));
+                _isServerGater = value;
+            } }
+        public void enableServerGater()
+        {
+            this.isServerGater = true;
+        }
+        /// <summary>
+        /// 集群通信服务Url（api调用）
+        /// </summary>
+        [JsonProperty]
+        public string serviceUrl { get; private set; }
+
+        private bool _isServerGater;
         /// <summary>
         /// 该server下的端口转发列表
         /// key是监听的端口号
@@ -212,54 +341,46 @@ namespace Proxy.Comm
         /// </summary>
 [JsonProperty]
         private Dictionary<string, mapPortGroup> maphttpGroup_dic { get; set; }
-
-        public zoneServerRoleEnum servertype { get; private set; }
-        [JsonIgnoreAttribute]
-        public List<serverMessage> unConsumeMessage;
-        public void setType(zoneServerRoleEnum _serverType)
-        {
-            lock (this)
-                this.servertype = _serverType;
-        }       
-        
-        public void addMessage(serverMessage _message)
-        {
-            lock (this)
-                this.unConsumeMessage.Add(_message);
-
-        }
-        public void removeMessage(serverMessage _message)
-        {
-            lock (this)
-                this.unConsumeMessage.Remove(_message);
-
-        }
+ 
+       
        
       
-        public proxyNettyServer(string cid, string httpport, string httpsport=null, int _maxPerfData=100) : this(cid,100,_maxPerfData)
+        public proxyNettyServer(string cid, string mapHttpPort,string _ServiceUrl, string mapHttpsPort=null,int failtime=100, int _maxPerfData=100) : base(cid,failtime,_maxPerfData)
         {          
-            this.port = httpport;
-            this.httpsPort = httpsport;
-        }
-        public proxyNettyServer(string cid,int failtime, int _maxPerfData):base(cid,failtime,_maxPerfData)
-        {
+            this.port = mapHttpPort;//http转发服务的端口，不是集群服务api的端口
+            this.httpsPort = mapHttpsPort;//同上
+           
             mapPortGroup_dic = new Dictionary<string, mapPortGroup>(StringComparer.OrdinalIgnoreCase);
             maphttpGroup_dic = new Dictionary<string, mapPortGroup>(StringComparer.OrdinalIgnoreCase);
-            unConsumeMessage = new List<serverMessage>();
-            this.servertype = zoneServerRoleEnum.repetiton;
-            bossGroup = new MultithreadEventLoopGroup(1);
-            workerGroup = new MultithreadEventLoopGroup();
-            SERVER_HANDLER = new ProxyServerHandler();
-            portbootstrap = new ServerBootstrap();
-            httpbossGroup = new MultithreadEventLoopGroup(1);
-            httpworkerGroup = new MultithreadEventLoopGroup();
-            httpbootstrap = new ServerBootstrap();
+
+  
+
+
+            if (string.IsNullOrEmpty(cid)) //如果cid==null，非本地服务，不需要启动dotnett服务
+            {
+                bossGroup = new MultithreadEventLoopGroup(1);
+                workerGroup = new MultithreadEventLoopGroup();
+                SERVER_HANDLER = new ProxyServerHandler();
+                portbootstrap = new ServerBootstrap();
+                httpbossGroup = new MultithreadEventLoopGroup(1);
+                httpworkerGroup = new MultithreadEventLoopGroup();
+                httpbootstrap = new ServerBootstrap();
+            }
+            this.serviceUrl = _ServiceUrl;
+            this.id = (cid+ this.serviceUrl).ToMD5(); //保证在同一个zone中，同一个服务url肯定的是同样的id；
+            this.needReportChange = true;
+            this.changeEventHandle += proxyServerChanged;
         }
-        public proxyNettyServer(string cid):this(cid,100,100)
+        public proxyNettyServer(string cid,int failtime, int _maxPerfData):this(cid,null,null,null,failtime,_maxPerfData)
+        {
+           
+        }
+        [JsonConstructor]
+        public proxyNettyServer():this("",100,100)
         {
 
         }
-        public JObject toJson()
+        public JObject toJObject()
         {            
             //JObject jobj = base.toJson();
             //jobj.Add("servertype", ((int)this.servertype));
@@ -273,14 +394,21 @@ namespace Proxy.Comm
 
             return JObject.FromObject(this);
         }
-       
+        public string toJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+        public static proxyNettyServer parlseJson(string str)
+        {
+            return JsonConvert.DeserializeObject<proxyNettyServer>(str);
+        }
                
         /// <summary>
         /// 
         /// </summary>
         public void loadPortProxyCfg()
         {
-            string filename = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, RunConfig.portProxyFileName);
+            string filename = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, localRunServer.portProxyFileName);
             if (!File.Exists(filename))
                 return;
             XmlDocument tmpxmldoc = Static_xmltools.GetXmlDocument(filename);
@@ -333,7 +461,7 @@ namespace Proxy.Comm
                     string needcl = Static_xmltools.GetXmlAttr(onenode, "needCheckLive");
                     bool.TryParse(needcl, out needcheck);
                     
-                    mpg.addOutPort(outHost, outPort, _outhttpsPort, maxcount, mincount,needcheck);
+                    mpg.addOutPort(outHost, outPort, _outhttpsPort, maxcount, needcheck);
                 }
                 if (mapType == 0)
                 {
@@ -355,61 +483,51 @@ namespace Proxy.Comm
                 }
             }
         }
-
-    }
-    public enum zoneServerRoleEnum
-    {
-        master = 0, //主节点
-        slave = 1,   //从节点
-        repetiton = 2//副本
-    }
-    public enum eventServerChangeType
-    {
-        add=0,
-        delete=1,
-        roleChange=2,
-        statuChange=3,
-    }
-    public class ClustChangeEventArgs : EventArgs
-    {
-        public readonly proxyNettyServer changeServer;
-        public readonly eventServerChangeType changeType;
-        public readonly string memo;
-        public ClustChangeEventArgs()
+        public void checkMapPortGroupAlive()
         {
 
         }
-        /// <summary>
-        /// 集群服务变更事件
-        /// </summary>
-        /// <param name="_changeServer">变更服务器</param>
-        /// <param name="_changeType">变更类型</param>
-        public ClustChangeEventArgs(proxyNettyServer _changeServer, eventServerChangeType _changeType)
-        {
-            this.changeServer = _changeServer;
-            this.changeType = _changeType;
-        }
     }
+   
+
     /// <summary>
     /// 服务集群实例,代表一个zone
     /// </summary>
     public class zoneServerCluster
     {
-        [JsonProperty]
-        public string id { get; private set; }
-        //声明一个变更时的委托
-        public delegate void ClusterChangeEventHander(object sender, ClustChangeEventArgs e);
-        //在委托的机制下,建立变更事件
-        public event ClusterChangeEventHander ChangeEvent;
-        //声明一个可重写的OnChange的保护函数
-        protected virtual void OnChange(ClustChangeEventArgs e)
+
+        public void  clusterServerChanged(object sender, serverChangeEventArgs e)
         {
-            if (ChangeEvent != null)
+            //处理消息
+            if (e.newValue.ToString()!=localRunServer.Instance.ownCluster.clusterId)
+                return;
+            if (e.changeServerId != localRunServer.Instance.ownServer.id)
+                return;
+            enum_Actiondo ead = enum_Actiondo.unknown;
+            if (e.changeType != serverChangeTypeEnum.zoneMasterChanged )
+            {
+                ead = enum_Actiondo.resetZoneServers;
+            }
+            else
+                ead = enum_Actiondo.resetZoneMasterServer;
+             actionMessage am = new actionMessage(ead, e.newValue.ToString(), this.regionName, "", "", "");
+            localRunServer.Instance.addActions(am);
+        }
+        [JsonProperty]
+        public string clusterId { get; private set; }
+
+        //在委托的机制下,建立变更事件
+        public event serverChangeEvnent clusterChangeEvent;
+        //声明一个可重写的OnChange的保护函数
+        protected virtual void OnChange(serverChangeEventArgs e)
+        {
+            if (clusterChangeEvent != null)
             {
                 //Sender = this，也就是serverZooCluster
-                this.ChangeEvent(this, e);
+                this.clusterChangeEvent(this, e);
             }
         }
+
         [JsonProperty]
         public proxyNettyServer master { get; private set; }
         [JsonProperty]
@@ -420,18 +538,37 @@ namespace Proxy.Comm
         [JsonProperty]
         public IList<proxyNettyServer> repetionList { get; private set; }
 
-        public proxyNettyServer getAvailableZS(string appkey)
+        public proxyNettyServer getAvailableServer(string appkey)
         {
             return null;
         }
-        internal zoneServerCluster(string region, string zone, proxyNettyServer masterServer)
+        public IList<proxyNettyServer> allAvailableServers()
+        {
+            List<proxyNettyServer> servers = new List<proxyNettyServer>();
+            if (master != null && master.status == serverStatusEnum.Ready)
+                servers.Add(master);
+            if (slave != null && slave.status == serverStatusEnum.Ready)
+                servers.Add(slave);
+            foreach(var one in repetionList)
+            {
+
+                if (one != null && one.status == serverStatusEnum.Ready)
+                    servers.Add(one);
+            }
+            return servers;
+        }
+        public zoneServerCluster(string region, string zone, proxyNettyServer masterServer)
         {
             this.zoneName = zone;
             this.master = masterServer;
             this.regionName = region;
-
+          
 
         }
+        [JsonConstructor]
+        public zoneServerCluster():this("","",null)
+        { }
+
 
         public proxyNettyServer getzoneServer(string host, string port)
         {
@@ -476,31 +613,32 @@ namespace Proxy.Comm
             if (repetionList.Contains(_slave))
                 removeRepetion(_slave);
             this.slave = _slave;
-            slave.setType(zoneServerRoleEnum.slave);
-            this.OnChange(new ClustChangeEventArgs(_slave, eventServerChangeType.roleChange));
+            if (_slave == localRunServer.Instance.ownServer)
+                localRunServer.Instance.zoneRole = ServerRoleEnum.zoneSlave;
+
+            this.OnChange(new serverChangeEventArgs(_slave.id, serverChangeTypeEnum.zoneSlaveChanged,"slave","",this.clusterId));
         }
-        public void slaveToMaster()
-        {
-            master = slave;
-            master.setType(zoneServerRoleEnum.master);
-            slave = null;
-            this.OnChange(new ClustChangeEventArgs(master, eventServerChangeType.roleChange));
-        }
+
         public void setMaster(proxyNettyServer _master)
         {
             if (repetionList.Contains(_master))
                 removeRepetion(_master);
+            if (slave == _master)
+                this.slave = null;
             this.master = _master;
-            master.setType(zoneServerRoleEnum.master);
-            this.OnChange(new ClustChangeEventArgs(_master, eventServerChangeType.roleChange));
+            if (_master == localRunServer.Instance.ownServer)
+                localRunServer.Instance.zoneRole = ServerRoleEnum.zoneMaster;
+            this.OnChange(new serverChangeEventArgs(_master.id, serverChangeTypeEnum.zoneMasterChanged,"master set","",this.clusterId));
         }
-        public void addRepetion(ref proxyNettyServer _server)
+        public void addRepetion( proxyNettyServer _server)
         {
             if (!repetionList.Contains(_server))
             {
+                if (_server == localRunServer.Instance.ownServer)
+                    localRunServer.Instance.zoneRole = ServerRoleEnum.zoneRepetiton;
                 this.repetionList.Add(_server);
-                _server.setType(zoneServerRoleEnum.repetiton);
-                this.OnChange(new ClustChangeEventArgs(_server, eventServerChangeType.add));
+               
+                this.OnChange(new serverChangeEventArgs(_server.id, serverChangeTypeEnum.zoneRepChanged,"repetionList add","",this.clusterId));
             }
         }
         public void removeRepetion(proxyNettyServer _server)
@@ -508,7 +646,9 @@ namespace Proxy.Comm
             if (repetionList.Contains(_server))
             {
                 this.repetionList.Remove(_server);
-                this.OnChange(new ClustChangeEventArgs(_server, eventServerChangeType.delete));
+                if (_server == localRunServer.Instance.ownServer)
+                    localRunServer.Instance.zoneRole = ServerRoleEnum.unkown;
+                this.OnChange(new serverChangeEventArgs(_server.id, serverChangeTypeEnum.zoneRepRemoved,"repetionList delete","",this.clusterId));
             }
         }
 
@@ -531,19 +671,19 @@ namespace Proxy.Comm
         /// <param name="offobj"></param>
         public void rsycUpdate(zoneServerCluster offobj)
         {
-            if (this.id != offobj.id)
+            if (this.clusterId != offobj.clusterId)
             {
                 //todoXout.LogInf("");
                 return;// 有异常问题，待处理
             }
 
-            if (offobj.master != null && offobj.master.id != RunConfig.Instance.ownPNServer.id)
+            if (offobj.master != null && offobj.master.id != localRunServer.Instance.ownServer.id)
             {
                 this.master = offobj.master;
             }
             if (offobj.master == null)
                 this.master = null;
-            if (offobj.slave != null && offobj.slave.id != RunConfig.Instance.ownPNServer.id)
+            if (offobj.slave != null && offobj.slave.id != localRunServer.Instance.ownServer.id)
             {
                 this.slave = offobj.slave;
             }
@@ -554,7 +694,7 @@ namespace Proxy.Comm
             this.zoneName = offobj.zoneName;
             foreach (var one in offobj.repetionList)
             {
-                if (one.id == RunConfig.Instance.ownPNServer.id)
+                if (one.id == localRunServer.Instance.ownServer.id)
                     continue;
                 var old = (from x in repetionList where x.id == one.id select x).FirstOrDefault();
                 if (old == null)
@@ -570,11 +710,11 @@ namespace Proxy.Comm
             JObject jobj = new JObject();
             JArray jarr = new JArray();
             if (this.master != null)
-                jobj.Add("master", master.toJson());
+                jobj.Add("master", master.toJObject());
             if (this.slave != null)
-                jobj.Add("slave", slave.toJson());
+                jobj.Add("slave", slave.toJObject());
             foreach (var obj in repetionList)
-                jarr.Add(obj.toJson());
+                jarr.Add(obj.toJObject());
             jobj.Add("repetionList", jarr);
             return jobj;
 
@@ -584,113 +724,89 @@ namespace Proxy.Comm
        
         public void setClusterID(string cid)
         {
-            this.id = cid;
+            this.clusterId = cid;
         }
-        public async Task startServerAsync()
+
+        
+        /// <summary>
+        /// 获取集群中有效服务器数量
+        /// </summary>
+        /// <returns></returns>
+        public int getZoneServerCount()
         {
-            try
+            int count = 0;
+            var one = this;
+            if (one.master != null && one.master.status == serverStatusEnum.Ready)
+                count++;
+            if (one.slave != null && one.slave.status == serverStatusEnum.Ready)
+                count++;
+            foreach (var rep in one.repetionList)
             {
-                if (RunConfig.Instance.thisRole != zoneServerRoleEnum.master)
-                {
-                  
-                    
-                }
-                string basepath = AppDomain.CurrentDomain.BaseDirectory;
-
-              
-
-                RunConfig.Instance.ownPNServer.setStatus(serverStatusEnum.Ready);
-                
-                RunConfig.Instance.addActionMessage(
-                   new actionMessage(enum_Actiondo.reportToMasterConfigData, 
-                   RunConfig.Instance.ownPNServer.getServerMessageFrom(), ""));
-
-
+                if (rep.status == serverStatusEnum.Ready)
+                    count++;
             }
-            catch (Exception exp)
-            {
-                Console.WriteLine("start server fail:{0}", exp.Message);
-                throw exp;
-            }            
-        }
-        public async Task stopServerAsync()
-        {
-         
-            //tcplistener.Stop();
-        }
-        public void checkZSserver()
-        {
-            Console.WriteLine("checkZSserver:{0}", RunConfig.Instance.thisRole);
-            if (RunConfig.Instance.thisRole == zoneServerRoleEnum.master)
-            {
-
-              
-                bool shouldremove = false;
-                if (slave!=null && slave.checkMeLive(out shouldremove))
-                {
-                    if (shouldremove)
-                        slave = null;
-                    RunConfig.Instance.addActionMessage(
-                        new actionMessage(enum_Actiondo.noticeToAllZServrConfigData, master.getServerMessageFrom(), ""));
-                    RunConfig.Instance.addActionMessage(
-                        new actionMessage(enum_Actiondo.noticeToAllOMPConfigData, master.getServerMessageFrom(), ""));
-                }
-                //foreach (var obj in repetionList)
-                for(int i=repetionList.Count-1;i>=0;i--)
-                {
-                    var obj = repetionList[i];
-                    shouldremove = false;
-                    if (obj.checkMeLive(out shouldremove) )
-                    {
-                        if (shouldremove)
-                        {
-                            lock (repetionList)
-                                repetionList.Remove(obj);
-                        }
-                        RunConfig.Instance.addActionMessage(
-                      new actionMessage(enum_Actiondo.noticeToAllZServrConfigData, master.getServerMessageFrom(), ""));
-                        RunConfig.Instance.addActionMessage(
-                      new actionMessage(enum_Actiondo.noticeToAllOMPConfigData, master.getServerMessageFrom(), ""));
-
-                       
-                    }
-                }
-                if (slave == null && repetionList.Count > 0)
-                {
-                    RunConfig.Instance.addActionMessage(
-                     new actionMessage(enum_Actiondo.resetSlaveServer, master.getServerMessageFrom(), ""));
-                   
-
-                }
-               
-            }
+            return count;
         }
     }
 
-
+    /// <summary>
+    /// 域服务,代表一个region
+    /// </summary>
     public class regionZoneServer
     {
         [JsonProperty]
         public string region { get; private set; }
-        public proxyNettyServer regionMaster;
+        public proxyNettyServer regionMaster{ get; private set; }
+        public proxyNettyServer regionSlave{ get; private set; }
         public Dictionary<string, zoneServerCluster> zoneServer_dic;
+
 
         public JObject toJson()
         {
             var jobj = JObject.FromObject(this);
             return jobj;
         }
+        /// <summary>
+        /// 获取该区域中服务器的总数
+        /// </summary>
+        /// <returns></returns>
+        public long getServerCount()
+        {
+            int count = 0;
+            if (this.regionMaster != null && this.regionMaster.status==serverStatusEnum.Ready)
+                count++;
+            foreach (var one in zoneServer_dic.Values)
+            {
+
+                count += one.getZoneServerCount();
+            }
+            return count;
+        }
         public proxyNettyServer getServerById(string id)
         {
+            proxyNettyServer result = null;
             foreach (var cluster in zoneServer_dic.Values)
             {
-                return cluster.getzoneServerById(id);
+                result= cluster.getzoneServerById(id);
+                if (result != null)
+                    return result;
+            }
+            return null;
+        }
+        public zoneServerCluster getClusterByeServerId(string id)
+        {
+            proxyNettyServer result = null;
+            foreach (var cluster in zoneServer_dic.Values)
+            {
+                result = cluster.getzoneServerById(id);
+                if (result != null)
+                    return cluster;
             }
             return null;
         }
         public void rsycUpdate(regionZoneServer offobj)
         {
-            if (offobj.regionMaster.id != RunConfig.Instance.ownPNServer.id)
+            if (offobj.regionMaster.id != localRunServer.Instance.ownServer.id)
             {
                 this.regionMaster = offobj.regionMaster;
                 this.region = offobj.region;
@@ -706,6 +822,19 @@ namespace Proxy.Comm
                     zoneServer_dic.Add(obj.Key, obj.Value);
                 }
             }
+        }
+        public void setMaster(proxyNettyServer _master)
+        {
+            this.regionMaster = _master;
+        }
+        public void setSlave(proxyNettyServer _slave)
+        {
+            this.regionSlave = _slave;
+        }
+        
+        public static regionZoneServer parlseJson(string str)
+        {
+            return JsonConvert.DeserializeObject<regionZoneServer>(str);
         }
         public regionZoneServer(string regionName)
         {

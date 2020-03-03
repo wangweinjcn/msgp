@@ -66,12 +66,12 @@ namespace Proxy.Comm.http
                     ctssc.removeOneClientChannel(clientkey);
                 }
             }
-            if (!RunConfig.Instance.ownPNServer.httpGroupContainKey(appkey))
+            if (!localRunServer.Instance.ownServer.httpGroupContainKey(appkey))
             {
                 
                 return null;
             }
-            ctssc.mapPortG = RunConfig.Instance.ownPNServer.getHttpGroupByKey(appkey);
+            ctssc.mapPortG = localRunServer.Instance.ownServer.getHttpGroupByKey(appkey);
             var mapto = ctssc.mapPortG.selectOutPortMaped();
             if (mapto == null)
                 return null;

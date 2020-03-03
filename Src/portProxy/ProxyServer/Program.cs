@@ -69,9 +69,9 @@ namespace Proxy.Server
         static void Main()
         {
           //  test();
-            var instance = RunConfig.Instance;
-            instance.ownPNServer.loadPortProxyCfg();
-            instance.ownPNServer.Start();
+            var instance = localRunServer.Instance;
+            instance.ownServer.loadPortProxyCfg();
+            instance.ownServer.Start();
             Console.ReadKey();
         }
 

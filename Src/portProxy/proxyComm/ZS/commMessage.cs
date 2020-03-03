@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,24 @@ namespace Proxy.Comm
 {
     public enum messageTypeEnum
     {
-        needRsycCluster = 0,
+        unUsed = -1,
+        /// <summary>
+        /// 需要上报给集群主控
+        /// </summary>
+        needReportToZoneMaster = 0,
+        /// <summary>
+        /// 需要上报给域主控
+        /// </summary>
+        needReportToRegionMaster =1,
+        /// <summary>
+        /// 需要向集群主控同步集群信息
+        /// </summary>
+        zoneNeedRsycFromMaster=10,
+        /// <summary>
+        /// 需要向域主控同步域信息
+        /// </summary>
+        regionNeedRsycFromMaster=11
+
     }
     public class serverMessage
     {
@@ -19,39 +37,52 @@ namespace Proxy.Comm
         /// <summary>
         /// 发送服务器的IP+端口号
         /// </summary>
-        public string fromServerHostPort;
+        public string fromServerName;
 
         /// <summary>
-        /// 目标服务器appkey，多个以";"隔开;*代表全部;空代表此项不筛选,优先级中，如果有，就不处理后一个的条件
+        ///停用， 目标服务器appkey，多个以";"隔开;*代表全部;空代表此项不筛选,优先级中，如果有，就不处理后一个的条件
         /// </summary>
+        [Obsolete]
         public string destAppKey;
         /// <summary>
-        /// 目标服务器{IP:Port}，多个以";"隔开;*代表全部,空代表此项不筛选,优先级低，必须是前两个条件为空时，在使用此条件
+        ///停用， 目标服务器{IP:Port}，多个以";"隔开;*代表全部,空代表此项不筛选,优先级低，必须是前两个条件为空时，在使用此条件
         /// </summary>
+        [Obsolete]
         public string destServerHostPort;
         /// <summary>
         /// 消息类型
         /// </summary>
         /// 
-
         public messageTypeEnum messageType;
 
         public string messageJsonBody;
-        public DateTime sendDt;
-        public serverMessage(string fromId, string fromHostPort, messageTypeEnum mType, string message,
-            string destAkey,  string destHostPort = "" )
+        public DateTime createDt;
+        public serverMessage(string fromId, string fromServerName, messageTypeEnum mType, string message   )
         {
             this.fromServerId = fromId;
-            this.fromServerHostPort = fromHostPort;
-           
-            destAppKey = destAkey;
+            this.fromServerName = fromServerName;    
             messageJsonBody = message;
             messageType = mType;
-            destServerHostPort = destHostPort;
-            sendDt = System.DateTime.Now;
+            createDt = System.DateTime.Now;
         }
+        public serverMessage(baseServer server, messageTypeEnum mType, string message):this(server.id,server._serverName,mType,message)
+        { }
+        [JsonConstructor]
+        public serverMessage():this("","",messageTypeEnum.unUsed,null)
+        { }
     }
-    public class commMessage
+
+    public class regionBroadCastMessage
+    {
+        public proxyNettyServer regionMaster;
+        public List<string> receivedServerId;
+        public DateTime sendDt;
+        public string memo;
+    }
+    /// <summary>
+    /// 队列消息类型
+    /// </summary>
+    public class queueMessage
     {
         private string _id;
         private string _receiptHandle;
@@ -69,7 +100,7 @@ namespace Proxy.Comm
         /// <summary>
         /// Empty constructor
         /// </summary>
-        public commMessage() { }
+        public queueMessage() { }
 
         /// <summary>
         /// Gets and sets the property Id. 

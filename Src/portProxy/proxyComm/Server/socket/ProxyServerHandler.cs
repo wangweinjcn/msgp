@@ -47,11 +47,11 @@ namespace Proxy.Comm.socket
                 throw new Exception("channel errror");
             }
             var lendp = (IPEndPoint)context.Channel.LocalAddress;
-            if (!RunConfig.Instance.ownPNServer.PortGroupContainKey(lendp.Port.ToString()))
+            if (!localRunServer.Instance.ownServer.PortGroupContainKey(lendp.Port.ToString()))
             {
                 throw new Exception("not port found");
             }
-            ctssc.mapPortG = RunConfig.Instance.ownPNServer.getPortGroupByKey(lendp.Port.ToString());
+            ctssc.mapPortG = localRunServer.Instance.ownServer.getPortGroupByKey(lendp.Port.ToString());
             var mapto =  ctssc.mapPortG.selectOutPortMaped();
 
             try

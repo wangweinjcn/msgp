@@ -3,153 +3,71 @@ using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Proxy.Comm
 {
-    public enum enum_Actiondo
+    /// <summary>
+    /// 变更响应
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+       public delegate void serverChangeEvnent(object sender, serverChangeEventArgs e);
+        public abstract class baseServer
     {
         /// <summary>
-        /// ZS服务器向主服务器通知本服务器有配置信息更改
+        /// 服务创建时间
         /// </summary>
-        reportToMasterConfigData = 0,
-        /// <summary>
-        /// 主服务器向所有集群内的服务器广播有服务器配置信息已变化
-        /// </summary>
-        noticeToAllZServrConfigData = 1,
-        /// <summary>
-        /// ZS服务器向本服务器内所有端口转发服务器广播有服务器配置信息变化
-        /// </summary>
-        noticeToAllOMPConfigData = 2,
-        /// <summary>
-        /// 重新设置主服务器
-        /// </summary>
-        resetMasterServer = 3,
-        /// <summary>
-        /// 重新设置从服务器
-        /// </summary>
-        resetSlaveServer = 4,
-        /// <summary>
-        /// 缓存对象发生变化
-        /// </summary>
-        cachObjectChange = 5
-    }
-    public class actionMessage
-    {
-        public string clusterID { get; private set; }
-        public enum_Actiondo action { get; private set; }
-        /// <summary>
-        /// 消息发送目的地所在，ClusterID|appHostIP:appPort:appHttpsPort
-        /// </summary>
-        public string destPoint { get; private set; }
-        /// <summary>
-        /// 消息本事ID；结构：YYYYMMDDHHMISS|guid
-        /// </summary>
-        public string ID { get; private set; }
-        /// <summary>
-        /// 消息来源所在，ClusterID|appHostIP:appPort:appHttpsPort
-        /// </summary>
-        public string fromPoint { get; private set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string message { get; private set; }
-        /// <summary>
-        /// 失败次数
-        /// </summary>
-        public int failcount;
-        private string parseClusterID(string fromapp)
-        {
-            int pos = fromapp.IndexOf('|');
-            if (pos < 0)
-                throw new Exception("fromapp格式错误");
-            return fromapp.Substring(0, pos);
-        }
-        public string toJsonStr()
-        {
-            return Newtonsoft.Json.JsonConvert.SerializeObject(this);
-        }
-        public actionMessage(enum_Actiondo _action, string clusterid, string host, string port, string httpsport, string _message = "")
-            : this(_action, clusterid + "|" + host + ":" + port + ":" + httpsport, _message)
-        { }
-        public actionMessage(enum_Actiondo _action, string _fromPoint,string _destPorint="", string _message = "")
-        {
-            this.ID = System.DateTime.Now.ToString("yyyyMMddHHmmss") + "-" + Guid.NewGuid().ToString();
-            this.clusterID = parseClusterID(_fromPoint);
-            this.fromPoint = _fromPoint;
-            this.action = _action;
-            this.message = _message;
-            this.destPoint = _destPorint;
-        }
-
-        public static actionMessage parseJson(string jsonstr)
-        {
-            JObject jobj = JObject.Parse(jsonstr);
-            return new actionMessage((enum_Actiondo)int.Parse(jobj["action"].ToString()), jobj["fromPoint"].ToString(),
-                jobj["destPoint"].ToString(), jobj["message"].ToString());
-        }
-    }
-
-    public enum serverStatusEnum
-    {
-        Startup=0,//启动中
-        Fail = -1,//故障
-        Ready = 1,//运行中
-        Disable = -2,//停用
-        StopFormaintenance = 2//停机维护
-    }
-    public enum serverChangeTypeEnum
-    {
-        serverStatusChanged=0, //服务器状态有变化，优先级最高
-        serverParamsChanged=1, //服务器服务参数变化，
-        serverSettDataChanged=2, //服务器统计数据有变化，优先级最低
-    }
-  
-    public class serverChangeEventArgs : EventArgs
-    {
-
-
-        public readonly string changeServerId;
-        public readonly serverChangeTypeEnum changeType;
-        public readonly string key;
-        public readonly object oldValue;
-        public readonly object newValue;
-
-        public serverChangeEventArgs()
-        {
-
-        }
-        public serverChangeEventArgs(string _changeServerId, serverChangeTypeEnum _changeType, string _key,object _oldValue,object _newValue)
-        {
-            this.changeServerId = _changeServerId;
-            this.changeType = _changeType;
-            this.key = _key;
-            this.oldValue = _oldValue;
-            this.newValue = _newValue;
-        }
-    }
-    public abstract class baseServer
-    {
-        public delegate void changeEvnent(object sender, serverChangeEventArgs e);
-        //在委托的机制下我们建立以个变更事件
-        public event changeEvnent changeEventHandle;
+        public DateTime createDt;
+       
+        //在委托的机制下我们建立以个变更事件，继承子类需要重写处理函数
+        public virtual event serverChangeEvnent changeEventHandle;
         //声明一个可重写的OnChange的保护函数
         protected virtual void Change(serverChangeEventArgs e)
         {
+            
             if (changeEventHandle != null)
             {
 
                 this.changeEventHandle(this, e);
             }
         }
+        public void baseServerChanged(object sender, serverChangeEventArgs e)
+        {
+            if (!this.needReportChange)
+            {
+                baseServer pserver = getOwnerServer();
+                if (pserver != null)
+                {
+                    e.fromServerList.Add(_serverName);
+                    pserver.Change(e);
+                }
+            }
+
+
+        }
+        protected virtual baseServer getOwnerServer()
+        {
+            throw new NotImplementedException();
+        }
+        
         /// <summary>
         /// 集群Id
         /// </summary>
         [JsonProperty]
-        public string clusterID { get; private set; }
+        public string clusterID { get; protected set; }
         /// <summary>
-        /// 是否需要报告变更,待定
+        /// 是否需要报告变更,是否需要处理变更事件的消息，
+        /// false时，调用getOwnerServer，继续上报变更；为true时需要处理变更事件并增加待处理消息
+        /// 
         /// </summary>
-        [JsonProperty]
+
+        public bool needReportChange { get { return _needReportChange; } set {
+            //不需要监控变更的事件，暂时注释
+                //    this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "needReportChange", needReportChange, value));
+                _needReportChange = value; } }
+
+
         public bool _needReportChange  { get; protected set; }
         /// <summary>
         /// 最大失效时间（秒）
@@ -176,11 +94,16 @@ namespace Proxy.Comm
         }
 
         public double _callResponseTime;
+        public string _serverName {
+            get {
+                return string.Format("{4} from {0}@{1}:{2} ", id, host, port,this.GetType().Name);
+            }
+        }
         /// <summary>
         /// 主机Id
         /// </summary>
         [JsonProperty]
-        public string id { get; private set; }
+        public string id { get; protected set; }
         /// <summary>
         /// 
         /// </summary>
@@ -190,7 +113,7 @@ namespace Proxy.Comm
         /// <summary>
         /// 服务器地址
         /// </summary>
-        public string host { get { return _host; }set {
+        public virtual string host { get { return _host; }set {
                 this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "host", _host, value));
                 _host = value;
             } }
@@ -206,7 +129,7 @@ namespace Proxy.Comm
         /// <summary>
         /// 可选的https服务端口
         /// </summary>
-        public string httpsPort { get { return _httpsPort; } set {
+        public virtual string httpsPort { get { return _httpsPort; } set {
                  this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "_httpsPort", _httpsPort, value));
                 _httpsPort = value;
             } }
@@ -234,18 +157,26 @@ namespace Proxy.Comm
 
         [JsonIgnoreAttribute]
         public performenceData performence;
-        public baseServer(string _clusterID, int _MapPortServerFailTime, int _PerformenceCountMax )
+
+        public baseServer(string _clusterID="", int _MapPortServerFailTime=100, int _PerformenceCountMax =0)
 
         {
+           
+            this._needReportChange = false;
             this.clusterID = _clusterID;
             this.mapPortServerFailTime = _MapPortServerFailTime;
             id = Guid.NewGuid().ToString();
-            performence = new performenceData(_PerformenceCountMax);
-            monitorCounter = new List<pCounter>();
+            if (_PerformenceCountMax > 0)
+            {
+                performence = new performenceData(_PerformenceCountMax);
+                monitorCounter = new List<pCounter>();
+            }
             lastLive = System.DateTime.Now;
             this.host = "";
             port = "";
             httpsPort = "";
+            this.changeEventHandle += baseServerChanged;
+            createDt = DateTime.Now;
         }
 
        
@@ -264,47 +195,7 @@ namespace Proxy.Comm
                 
            
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="exceedMaxTimeOut"> 是否超时5倍时间</param>
-        /// <returns>
-        /// true:有状态修改
-        /// false：没有状态修改
-        /// </returns>
-        public bool checkMeLive(out bool exceedMaxTimeOut)
-        {
-            baseServer obj = this;
-            exceedMaxTimeOut = false;
-            bool res = false;
-            if (obj.status != serverStatusEnum.Ready && obj.status != serverStatusEnum.Fail)
-                return res;
 
-            TimeSpan ts = System.DateTime.Now.Subtract(obj.lastLive).Duration();
-            if (obj.status == serverStatusEnum.Ready && ts.TotalSeconds > mapPortServerFailTime)
-            {
-             
-                obj.setStatus(serverStatusEnum.Fail);
-                res = true;
-            }
-            if (obj.status == serverStatusEnum.Fail && ts.TotalSeconds > 5 * mapPortServerFailTime)
-            {
-               
-                exceedMaxTimeOut = true;
-                res = true;
-            }
-            else
-            {
-                if (obj.status == serverStatusEnum.Fail && ts.TotalSeconds <= mapPortServerFailTime)
-                {
-                  
-                    obj.setStatus(serverStatusEnum.Ready);
-                    res = true;
-                }
-
-            }
-            return res;
-        }
         private int _connectedCount;
         public int connectedCount
         {
@@ -351,7 +242,184 @@ namespace Proxy.Comm
              throw new NotImplementedException();
         }
 
+    }    
+public class serverChangeEventArgs : EventArgs
+    {
+
+        public List<string> fromServerList;
+        public readonly string changeServerId;
+        public readonly serverChangeTypeEnum changeType;
+        public readonly string key;
+        public readonly object oldValue;
+        public readonly object newValue;
+
+        public serverChangeEventArgs()
+        {
+
+        }
+        public serverChangeEventArgs(string _changeServerId, serverChangeTypeEnum _changeType, string _key,object _oldValue,object _newValue)
+        {
+            this.changeServerId = _changeServerId;
+            this.changeType = _changeType;
+            this.key = _key;
+            this.oldValue = _oldValue;
+            this.newValue = _newValue;
+        }
     }
+    public enum serverStatusEnum
+    {
+        Startup=0,//启动中
+        Fail = -1,//故障
+        Ready = 1,//运行中
+        Disable = -2,//停用
+        StopFormaintenance = 2//停机维护
+    }
+    public enum serverChangeTypeEnum
+    {
+        serverStatusChanged=0, //服务器状态有变化，优先级最高
+        serverParamsChanged=1, //服务器服务参数变化，
+        serverSettDataChanged=2, //服务器统计数据有变化，优先级最低
+
+        zoneMasterChanged=10, //集群主控变动
+        zoneSlaveChanged = 11,
+        zoneRepChanged = 12,
+        zoneRepRemoved=13,
+
+        regionMasterChanged = 20, //域主控变动
+        regionSlaveChanged = 21,
+        regionRepChanged = 22,
+        regionZoneRemoved=23,
+
+        serverRoleChanged = 100,//服务器角色有变化，应用在集群服务器角色中
+    }
+
+    public enum ServerRoleEnum
+    {
+        unkown=-1, //未至
+        zoneMaster = 0, //集群主控节点
+        zoneSlave = 1,   //集群从控节点
+        zoneRepetiton = 2,//集群副本控制器
+            regionMaster=10, //域主控节点
+            regionSlave=11,  //域从控节点
+    }
+    public class actionMessage
+    {
+        [JsonProperty]
+        public string fromRegion { get; private set; }
+        [JsonProperty]
+        public string destRegion { get; private set; }
+        [JsonProperty]
+        public enum_Actiondo action { get; private set; }
+        /// <summary>
+        /// 消息发送目的地所在
+        /// </summary>
+        [JsonProperty]
+        public string destServerId { get; private set; }
+        /// <summary>
+        /// 消息本身ID
+        /// </summary>
+        [JsonProperty]
+        public string ID { get; private set; }
+        /// <summary>
+        /// 消息来源所在，serverid
+        /// </summary>
+        [JsonProperty]
+        public string fromServerId { get; private set; }
+        /// <summary>
+        /// 参数
+        /// </summary>
+        [JsonProperty]
+        public string messageParam { get; private set; }
+        /// <summary>
+        /// 失败次数
+        /// </summary>
+        [JsonProperty]
+        public int failcount;
+        [JsonProperty]
+        public DateTime createDt;
+
+        public string toJsonStr()
+        {
+            return Newtonsoft.Json.JsonConvert.SerializeObject(this);
+        }
+
+        [JsonConstructor]
+        public actionMessage()
+        {
+
+        }
+        public actionMessage(enum_Actiondo _action, string _fromId,string _fromRegion, string _destId = "",string _destRegion="", string _message = "")
+        {
+            this.ID = System.DateTime.Now.ToString("yyyyMMddHHmmss") + "-" + Guid.NewGuid().ToString();
+           
+            this.fromServerId = _fromId;
+            this.fromRegion = _fromRegion;
+            this.destRegion = _destRegion;
+            this.action = _action;
+            this.messageParam = _message;
+            this.destServerId = _destId;
+            createDt = DateTime.Now;
+        }
+
+        public static actionMessage parseJson(string jsonstr)
+        {
+
+            return JsonConvert.DeserializeObject<actionMessage>(jsonstr);
+        }
+    }
+    public enum enum_Actiondo
+    {
+            unknown=0,
+        /// <summary>
+        /// 集群主服务器向集群内的服务器通知，向主服务器取同步信息；在参数中包含需要的主服务器地址,参数名：url;全部更新Region
+        /// </summary>
+        noticeToRsycZoneMaster = 1,
+        /// <summary>
+        /// 域主服务器向域内的服务器通知，向主服务器取同步信息；在参数中包含需要的主服务器地址,参数名:url；全部更新cluster
+        /// </summary>
+        noticeToRsycRegionMaster = 2,
+
+        /// <summary>
+        /// 集群内设置主服务器；
+        /// </summary>
+        resetZoneMasterServer = 3,
+        /// <summary>
+        /// 集群服务器变更
+        /// </summary>
+        resetZoneServers = 4,
+
+        /// <summary>
+        /// 域内设置主服务器；
+        /// </summary>
+        resetRegionMasterServer = 5,
+        /// <summary>
+        /// 域服务器变更
+        /// </summary>
+        resetRegionServers = 6,
+        /// <summary>
+        /// 域服务器集群变更
+        /// </summary>
+        resetRegionZones = 7,
+        /// <summary>
+        /// 广播消息设置域主服务器，参数中是主服务器地址
+        /// </summary>
+        broadcastFromRegionMaster = 9,
+        /// <summary>
+        /// 服务器信息变更，参数是{"url":"","region":"","zone":"","id":""}
+        /// </summary>
+            ServerChanged=100,
+            /// <summary>
+            /// 服务器新增
+            /// </summary>
+            serverAdd=101,
+            /// <summary>
+            /// 服务器移除
+            /// </summary>
+            serverRemove=102,
+    }
+    #region willobsolute
+
+    [Obsolete]
     public class perfDataItem
     {
         public pCounter pc;
@@ -364,7 +432,7 @@ namespace Proxy.Comm
             this.reportDt = System.DateTime.Now;
         }
     }
-
+    [Obsolete]
     public class performenceData
     {
         Dictionary<pCounter, Queue<perfDataItem>> pCData;
@@ -403,5 +471,5 @@ namespace Proxy.Comm
             dataq.Enqueue(pdi);
         }
     }
-
+    #endregion
 }
