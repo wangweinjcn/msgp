@@ -36,13 +36,15 @@ namespace Proxy.Comm.model
         /// <summary>
         /// 归属的服务器Id
         /// </summary>
-        public string ownServerId { get { return ownServer.id; } }
+        public string ownServerId { get {  if (ownServer != null) return ownServer.id;
+                else
+                    return null; } }
 
         /// <summary>
         /// 归属集群Id 
         /// </summary>
 
-        public string cid { get { return ownServer.clusterID; } }
+        public string cid { get { if (ownServer != null) return ownServer.clusterID; else return null; } }
 
         /// <summary>
         /// 转发映射类型，0：端口转发，1：http的appkey转发
@@ -50,7 +52,7 @@ namespace Proxy.Comm.model
         [JsonProperty]
         public int mapType { get { return _mapType; }
             private set {
-                  this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "mapType", _mapType, value));
+                  this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "mapType", _mapType, value));
                 _mapType = value;
             } }
 
@@ -59,7 +61,7 @@ namespace Proxy.Comm.model
         /// 最大允许连入数量
         /// </summary>
         public int maxInCount { get { return _maxInCount; } set {
-                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "maxInCount", maxInCount, value));
+                this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "maxInCount", maxInCount, value));
                 _maxInCount = value;
             } }
         private int _maxInCount;
@@ -71,7 +73,7 @@ namespace Proxy.Comm.model
         /// 
         [JsonProperty]
         public long inCount { get { return _inCount; } private set {
-                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "inCount", inCount, value));
+                this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "inCount", inCount, value));
                 _inCount = value;
             } }
 
@@ -89,7 +91,7 @@ namespace Proxy.Comm.model
                 bytesSend+=count;
 
             }
-            this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "bytesSend", oldvalue, bytesSend));
+            this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "bytesSend", oldvalue, bytesSend));
 
         }
         /// <summary>
@@ -105,7 +107,7 @@ namespace Proxy.Comm.model
                 bytesRecv += count;
 
             }
-            this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "bytesRecv", oldvalue, bytesRecv));
+            this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "bytesRecv", oldvalue, bytesRecv));
 
         }
 
@@ -113,7 +115,7 @@ namespace Proxy.Comm.model
         /// 应用Key值
         /// </summary>
         public string appkey { get { return _appkey; } set {
-                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "appkey", appkey, value));
+                this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "appkey", appkey, value));
                 _appkey = value;
             } }
         private string _appkey;
@@ -121,7 +123,7 @@ namespace Proxy.Comm.model
         /// 转发选择策略
         /// </summary>
         public outPortSelectPolicy groupPolicy { get { return _groupPolicy; } set {
-                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "groupPolicy", _groupPolicy, value));
+                this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "groupPolicy", _groupPolicy, value));
                 _groupPolicy = value;
             } }
 
@@ -131,7 +133,7 @@ namespace Proxy.Comm.model
         /// 是否使用https
         /// </summary>
         public listenHttpsEnum useHttps { get { return _useHttps; } set {
-                  this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "useHttps", _useHttps, value));
+                  this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "useHttps", _useHttps, value));
                 _useHttps = value;
             } }
         private listenHttpsEnum _useHttps;
@@ -164,7 +166,8 @@ namespace Proxy.Comm.model
         /// <summary>
         /// 可转发服务列表
         /// </summary>
-        private IList<outMapPort> outPortList;
+        [JsonProperty]
+        internal IList<outMapPort> outPortList;
         /// <summary>
         /// 
         /// </summary>
@@ -179,7 +182,7 @@ namespace Proxy.Comm.model
                 inCount++;
 
             }
-          this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "inCount", oldvalue, inCount));
+          this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "inCount", oldvalue, inCount));
 
         }
         public IList<outMapPort> getAllServer()
@@ -196,7 +199,7 @@ namespace Proxy.Comm.model
                     inCount--;
 
             }
-          this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "inCount", oldvalue, inCount));
+          this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "inCount", oldvalue, inCount));
         }
 
         public outMapPort selectOutPortMaped()
@@ -251,7 +254,18 @@ namespace Proxy.Comm.model
 
         }
         #endregion Data Members
-        public mapPortGroup(string host, string port, string appkey, int _listenCount, outPortSelectPolicy grouppolicy, proxyNettyServer oServer, bool fromEureka = false) : this(host, port, appkey, _listenCount, grouppolicy, null, oServer, listenHttpsEnum.onlyHttpsPort, 0, fromEureka)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="port"></param>
+        /// <param name="appkey"></param>
+        /// <param name="_listenCount"></param>
+        /// <param name="grouppolicy"></param>
+        /// <param name="oServer"></param>
+        /// <param name="_mapType">0:端口转发，1：http的appkey转发</param>
+        /// <param name="fromEureka"></param>
+        public mapPortGroup(string host, string port, string appkey, int _listenCount, outPortSelectPolicy grouppolicy, proxyNettyServer oServer,int _mapType, bool fromEureka = false) : this(host, port, appkey, _listenCount, grouppolicy, null, oServer, listenHttpsEnum.onlyHttpsPort, _mapType, fromEureka)
         { }
         public mapPortGroup(string host, string port, string appkey, int _listenCount, outPortSelectPolicy grouppolicy, string httpsPort, proxyNettyServer oServer, listenHttpsEnum usehttps = listenHttpsEnum.onlyListenport, int _mapType = 0, bool fromEureka = false) : this()
         {
@@ -405,7 +419,7 @@ namespace Proxy.Comm.model
             get { return _maxConnected; }
             private set
             {
-                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "maxConnected", _maxConnected, value));
+                this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "maxConnected", _maxConnected, value));
                 _maxConnected = value;
             }
         }
@@ -422,7 +436,7 @@ namespace Proxy.Comm.model
             {
                 _msec_ServerProcess = _msec_ServerProcess + count;
             }
-            this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_msec_ServerProcess", oldvalue, _msec_ServerProcess));
+            this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_msec_ServerProcess", oldvalue, _msec_ServerProcess));
         }
         /// <summary>
         /// 对端服务请求次数
@@ -436,7 +450,7 @@ namespace Proxy.Comm.model
                 _serverProcessCount++;
             }
             this.lastLive = DateTime.Now;
-            this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_serverProcessCount", oldvalue, _serverProcessCount));
+            this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_serverProcessCount", oldvalue, _serverProcessCount));
         }
         /// <summary>
         /// 累计发送字节
@@ -449,7 +463,7 @@ namespace Proxy.Comm.model
             {
                 _bytes_send = _bytes_send + sendcount;
             }
-          this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_bytes_send", oldvalue, _bytes_send));
+          this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_bytes_send", oldvalue, _bytes_send));
         }
         /// <summary>
         /// 累计接收字节
@@ -462,7 +476,7 @@ namespace Proxy.Comm.model
             {
                 _bytes_recv = _bytes_recv + recvcount;
             }
-         this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_bytes_recv", oldvalue, _bytes_recv));
+         this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverSettDataChanged, "_bytes_recv", oldvalue, _bytes_recv));
         }
         /// <summary>
         /// 归属组
@@ -476,7 +490,7 @@ namespace Proxy.Comm.model
         /// </summary>
         public int planPercentCount { get { return _planPercentCount; }
             set {
-                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "planPercentCount", _planPercentCount, value));
+                this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "planPercentCount", _planPercentCount, value));
                 _planPercentCount = value;
             }
         }
@@ -492,7 +506,7 @@ namespace Proxy.Comm.model
         [JsonProperty]
         public bool needCheckLive { get { return _needCheckLive; }
             private set {
-                this.Change(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "needCheckLive", _needCheckLive, value));
+                this.onChonage(new serverChangeEventArgs(this.id, serverChangeTypeEnum.serverParamsChanged, "needCheckLive", _needCheckLive, value));
                 _needCheckLive = value;
             } }
         private bool _needCheckLive;

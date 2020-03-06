@@ -18,9 +18,11 @@ using System.Timers;
 namespace Proxy.Comm
 {
     using Ace;
+    using DotNetty.Transport.Channels;
     using FrmLib.Http;
     using Microsoft.Extensions.Configuration;
     using Newtonsoft.Json.Linq;
+    using Proxy.Comm.model;
     using System.Linq;
     using System.Xml.Serialization;
 
@@ -45,15 +47,15 @@ namespace Proxy.Comm
         private static localRunServer _instance = null;
         private static readonly object padlock = new object();
         private HttpHelper hclient { get; set; }
-        private rsycClient _rsycClient = new rsycClient();
+        private serverFuncHttpUtils _rsycClient = new serverFuncHttpUtils();
         #region 属性
         [JsonIgnore]
         [XmlIgnore]
         public zoneServerCluster ownCluster { get {
                 if (region_dic.ContainsKey(this.region))
                 {
-                    if (region_dic[this.region].zoneServer_dic.ContainsKey(this.zone))
-                        return region_dic[this.region].zoneServer_dic[this.zone];
+                    if (region_dic[this.region].ContainsKey(this.zoneclusterId))
+                        return region_dic[this.region].getzoneServerCluster(this.zoneclusterId);
                 }
                      return null;
             }
@@ -81,7 +83,7 @@ namespace Proxy.Comm
         /// <summary>
         /// 集群Id
         /// </summary>
-        public string clusterId { get; private set; }
+        public string clusterId { get { return zoneclusterId; } private set { zoneclusterId = value; } }
 
         /// <summary>
         /// 活动处理时间间隔
@@ -101,7 +103,7 @@ namespace Proxy.Comm
         ///  </summary>
         public int regionBroadcastTime = 600;
 
-        public const string portProxyFileName = "MapProxy.config";
+        public const string portProxyFileName = "configs/MapProxy.config";
         public proxyNettyServer ownServer { get; set; }
 
 
@@ -169,6 +171,8 @@ namespace Proxy.Comm
         /// <summary>
         /// 同一个zone下的所有proxyNettyServer和代理的后置服务都是网络相通的，既可以相互替代；一个zone组成一个集群
         /// </summary>
+        public string zoneclusterId { get; private set; }
+
         public string zone { get; private set; }
         /// <summary>
         /// http代理的端口
@@ -181,7 +185,7 @@ namespace Proxy.Comm
         /// </summary>
         private object aliveLockobj = new object();
         private bool sayaliveNowDo = false;
-        private   Timer keepAliveTimer;
+        private   Timer sayAliveTimer;
         /// <summary>
         /// 广播定时器
         /// </summary>
@@ -200,6 +204,7 @@ namespace Proxy.Comm
         private object checkAliveLockObj = new object();
         private bool checkAliveNowDo = false;
         private Timer checkAliveTimer;
+     
         private static localRunServer getInstance()
         {
             lock (padlock)
@@ -249,7 +254,8 @@ namespace Proxy.Comm
                 this.lPort = commSetting.Configuration["urls:port"];
                 this.regionRole = ServerRoleEnum.unkown;
                 this.zoneRole = ServerRoleEnum.unkown;
-                commSetting.Configuration.GetSection("").Bind(this.regionUrls);
+                commSetting.Configuration.GetSection("gateServer:regionUrls").Bind(this.regionUrls);
+                commSetting.Configuration.GetSection("gateServer:zoneUrls").Bind(this.zoneUrls);
 
                 this.maxPerfDataCount = int.Parse(commSetting.Configuration["gateServer:maxPerfDataCount"]);
                 this.serverFailTimes = int.Parse(commSetting.Configuration["gateServer:serverFailTimes"]);
@@ -262,21 +268,26 @@ namespace Proxy.Comm
                 this.zone = commSetting.Configuration["gateServer:zone"];
                 if (string.IsNullOrEmpty(zone))
                     throw new Exception("zone is not allow null");
-                keepAliveTimer = new System.Timers.Timer(sayAliveTime);
-                keepAliveTimer.Stop();
+                this.zoneclusterId = string.Format("{0}:{1}",region,zone).ToMD5();
+                sayAliveTimer = new System.Timers.Timer(sayAliveTime);
+                sayAliveTimer.Stop();
                 RegionBroadCastTimer = new System.Timers.Timer(regionBroadcastTime);
                 RegionBroadCastTimer.Stop();
+
                 actionDoTimer = new Timer(actionProcessTime);
-                actionDoTimer.Elapsed += new System.Timers.ElapsedEventHandler(actionMessageProcesser);
+                actionDoTimer.Elapsed += new System.Timers.ElapsedEventHandler(triggerActionMessageProcesser);
                 actionDoTimer.AutoReset = true;
+                
                 checkAliveTimer = new Timer(sayAliveTime);
-                checkAliveTimer.Stop();
+                checkAliveTimer.Elapsed += new ElapsedEventHandler(triggerCheckAlive);
+                checkAliveTimer.AutoReset = true;
+               
                 this.httpProxyPort = (commSetting.Configuration["gateServer:httpProxyPort"]);
 
 
                 perfCounters = new List<pCounter>();
                 region_dic = new Dictionary<string, regionZoneServer>(StringComparer.CurrentCultureIgnoreCase);
-
+               
 
             }
             catch (Exception e)

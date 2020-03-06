@@ -1,18 +1,23 @@
 using Ace.Web.Mvc;
 using eurekaServer.Models;
 using FrmLib.Extend;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Formatters.Xml.Extensions;
+using Newtonsoft.Json;
 using Proxy.Comm;
 using Proxy.Comm.model;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Text;
 using System.Xml;
 
 namespace eurekaServer.Areas.Controllers
@@ -24,6 +29,7 @@ namespace eurekaServer.Areas.Controllers
     [Route("[Area]/[controller]/[action]")]
     [AllowAnonymous]
     [ApiController]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + "," + CookieAuthenticationDefaults.AuthenticationScheme)]
     public class gServerController : apiController
     {
         string newskey;
@@ -78,8 +84,8 @@ namespace eurekaServer.Areas.Controllers
         {
             regionZoneServer regionZone=getRegion(regionName);
 
-            if (regionZone.zoneServer_dic.ContainsKey(zoneName))
-                return regionZone.zoneServer_dic[zoneName];
+            if (regionZone.containZone(zoneName))
+                return regionZone.getzoneServerClusterByName(zoneName);
 
             return null;
         }
@@ -106,7 +112,7 @@ namespace eurekaServer.Areas.Controllers
             var server = regionZone.getServerById(sid);
             if (server != null)
                 server.lastLive = DateTime.Now;
-            return noContentStatus(HttpStatusCode.OK);
+            return SuccessMsg();
         }
         /// <summary>
         /// 
@@ -125,7 +131,7 @@ namespace eurekaServer.Areas.Controllers
             var server = regionZone.getServerById(id);
             if (server != null)
                 server.lastLive = DateTime.Now;
-            return noContentStatus(HttpStatusCode.OK);
+            return SuccessMsg();
         }
 
         /// <summary>
@@ -137,7 +143,7 @@ namespace eurekaServer.Areas.Controllers
         [SwaggerOperation(Tags = new[] { "gServer" })]
         public IActionResult echoFor()
         {
-            return SuccessData(localRunServer.Instance.ownServer.id);
+            return SuccessData(new { id = localRunServer.Instance.ownServer.id });
 
         }
         /// <summary>
@@ -149,10 +155,19 @@ namespace eurekaServer.Areas.Controllers
         [SwaggerOperation(Tags = new[] { "gServer" })]
         public IActionResult registerToZoneMaster([FromBody]proxyNettyServer server)
         {
+            //Stream stream = HttpContext.Request.Body;
+            //byte[] buffer = new byte[HttpContext.Request.ContentLength.Value];
+            //stream.Read(buffer, 0, buffer.Length);
+            //string temp = Encoding.UTF8.GetString(buffer);
+            //Console.WriteLine(temp);
+            //if (string.IsNullOrEmpty(temp))
+            //    return FailedMsg("参数为空");
+            //proxyNettyServer server = JsonConvert.DeserializeObject<proxyNettyServer>(temp);
+ 
             if (localRunServer.Instance.zoneRole != ServerRoleEnum.zoneMaster)
                  return FailedMsg(400,"not a zoneMaster");
             var zoneCluster = getZone(localRunServer.Instance.zone, localRunServer.Instance.region);
-            if(zoneCluster.clusterId!=server.clusterID)
+            if(zoneCluster==null || zoneCluster.clusterId!=server.clusterID)
                 return FailedMsg(400,"not a same cluster");
             Object o;
             lock (zoneCluster)
@@ -164,8 +179,26 @@ namespace eurekaServer.Areas.Controllers
                 }
                 else
                 {
-                    zoneCluster.addRepetion(server);
-                     o = new { serverType = (int)ServerRoleEnum.zoneRepetiton };
+                    if (zoneCluster.slave.id == server.id)
+                    {
+                        zoneCluster.setSlave(server);
+                        o = new { serverType = (int)ServerRoleEnum.zoneSlave };
+                    }
+                    else
+                    {
+                        var oldserver = (from x in zoneCluster.repetionList where x.id == server.id select x).FirstOrDefault();
+                        if (oldserver != null)
+                        {
+                            
+                            oldserver.setStatus(serverStatusEnum.Ready);
+                        }
+                        else
+                        {
+                            zoneCluster.addRepetion(server);
+                           
+                        }
+                        o = new { serverType = (int)ServerRoleEnum.zoneRepetiton };
+                    }
                 }
             }
             return SuccessData(o);
@@ -214,23 +247,66 @@ namespace eurekaServer.Areas.Controllers
             Object o;
             lock (regionZone)
             {
-                if(regionZone.zoneServer_dic.ContainsKey(zsc.zoneName))
-                   regionZone.zoneServer_dic.Remove(zsc.zoneName);
-                regionZone.zoneServer_dic.Add(zsc.zoneName, zsc);
+                if(regionZone.containZone(zsc.zoneName))
+                   regionZone.removeZoneServerClusterByName(zsc.zoneName);
+                regionZone.addZoneServer(zsc);
                
                 if (regionZone.regionSlave == null)
                 {
+                   
                     regionZone.setSlave(server);
                     o = new { serverType = (int)ServerRoleEnum.regionSlave };
                 }
                 else
                 {
-                    
+                    if (regionZone.regionSlave.id== server.id)
+                    {
+                         var oldserver = regionZone.getServerById(server.id);
+                        oldserver = server;
+                        regionZone.setSlave(server);//待确认
+                         o = new { serverType = (int)ServerRoleEnum.regionSlave };
+                    }
+                    else
                     o = new { serverType = (int)ServerRoleEnum.unkown };
                 }
 
             }
             return SuccessData(o);
+        }
+        /// <summary>
+        /// 集群内服务器向master提交自己变更信息
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="am"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{id}")]
+        [SwaggerOperation(Tags = new[] { "gServer" })]
+        public IActionResult reportServerChanged([FromRoute]string id, [FromBody]proxyNettyServer server)
+        {
+            if (localRunServer.Instance.ownServer.id != id)
+                return FailedMsg("错误的Id，与请求服务器不符");
+            if (localRunServer.Instance.zoneRole != ServerRoleEnum.zoneMaster)
+            {
+                return FailedMsg("I am not a master server");
+            }
+            var oldserver = localRunServer.Instance.ownCluster.getzoneServerById(server.id);
+            if (oldserver == null)
+            {
+                if (localRunServer.Instance.ownCluster.slave == null)
+                    localRunServer.Instance.ownCluster.setSlave(server);
+                else
+                    localRunServer.Instance.ownCluster.addRepetion(server);
+            }
+            else
+            {
+                oldserver = server;
+            }
+
+            var o = new {Actiondo=(int)enum_Actiondo.needRsycOneServer, url=localRunServer.Instance.ownServer.serviceUrl,region=localRunServer.Instance.region,zone=localRunServer.Instance.zone,id=server.id };
+            actionMessage am = new actionMessage(enum_Actiondo.needNoticeServer, localRunServer.Instance.ownServer.id, localRunServer.Instance.region, "", "", JsonConvert.SerializeObject(o));
+            localRunServer.Instance.addActions(am);
+            return SuccessMsg();
         }
 
         /// <summary>
@@ -245,9 +321,10 @@ namespace eurekaServer.Areas.Controllers
         public IActionResult NoticeServer([FromRoute]string id,[FromBody]actionMessage am)
         {
             if (localRunServer.Instance.ownServer.id != id)
-                return noContentStatus(HttpStatusCode.BadRequest);
+                return FailedMsg("错误的Id，与请求服务器不符");
             else
             {
+
                 localRunServer.Instance.addActions(am);
                 return SuccessMsg("ok");
             }
@@ -282,12 +359,11 @@ namespace eurekaServer.Areas.Controllers
             if (string.IsNullOrEmpty(regionName))
                 return FailedMsg(400,"bad region name");
 
-            if (!localRunServer.Instance.region_dic.ContainsKey(regionName)
-                || !localRunServer.Instance.region_dic.ContainsKey("*"))
-                return FailedMsg(404, "no found");
+
 
             regionZoneServer regionZone=getRegion(regionName);
-            
+            if(regionZone==null)
+                 return FailedMsg(404, "no found");
 
             return SuccessData(regionZone);
 
@@ -307,6 +383,94 @@ namespace eurekaServer.Areas.Controllers
                     return SuccessData(server);
             }
             return FailedMsg("not found server");
+        }
+        #endregion
+        #region 服务器管理
+        /// <summary>
+        /// 打开网关功能
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{id}")]
+        [SwaggerOperation(Tags = new[] { "psManage" })]
+        public IActionResult enableGateService([FromRoute]string id)
+        {
+            if (localRunServer.Instance.ownServer.id != id)
+                return FailedMsg("错误的Id，与请求服务器不符");
+            else
+            {
+
+                localRunServer.Instance.ownServer.setServerGaterEnable(true);
+                return SuccessMsg("ok");
+            }
+        }
+        /// <summary>
+        /// 关闭网关功能
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{id}")]
+        [SwaggerOperation(Tags = new[] { "psManage" })]
+        public IActionResult disableGateService([FromRoute]string id)
+        {
+            if (localRunServer.Instance.ownServer.id != id)
+                return FailedMsg("错误的Id，与请求服务器不符");
+            else
+            {
+
+                localRunServer.Instance.ownServer.setServerGaterEnable(false);
+                return SuccessMsg("ok");
+            }
+        }
+        /// <summary>
+        /// 打开服务注册
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{id}")]
+        [SwaggerOperation(Tags = new[] { "psManage" })]
+        public IActionResult enableRegisterService([FromRoute]string id)
+        {
+            if (localRunServer.Instance.ownServer.id != id)
+                return FailedMsg("错误的Id，与请求服务器不符");
+            else
+            {
+
+                localRunServer.Instance.ownServer.setServerRegisterEnable(true);
+                return SuccessMsg("ok");
+            }
+        }
+        /// <summary>
+        /// 关闭服务注册
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{id}")]
+        [SwaggerOperation(Tags = new[] { "psManage" })]
+        public IActionResult disableRegisterService([FromRoute]string id)
+        {
+            if (localRunServer.Instance.ownServer.id != id)
+                return FailedMsg("错误的Id，与请求服务器不符");
+            else
+            {
+
+                localRunServer.Instance.ownServer.setServerRegisterEnable(false);
+                return SuccessMsg("ok");
+            }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name=""></param>
+        /// <returns></returns>
+        public IActionResult addOutMapGroup([FromRoute]string id, [FromBody]mapPortGroup mpg)
+        {
+
         }
         #endregion
 

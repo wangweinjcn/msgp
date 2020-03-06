@@ -9,6 +9,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Proxy.Comm;
 
 namespace eurekaServer
 {
@@ -17,7 +18,7 @@ namespace eurekaServer
         public static void Main(string[] args)
         {
             //CreateWebHostBuilder(args).Build().Run();
-
+          
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); /* 支持中文 */
             string contentRoot = Directory.GetCurrentDirectory();
 
@@ -25,7 +26,7 @@ namespace eurekaServer
             var host = hostBuilder
                   .BindUrls(args, contentRoot)
                   .UseContentRoot(contentRoot)
-                .UseStartup<nnStartup>()
+                .UseStartup<nStartup>()
                  .UseKestrel(o => { o.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(30); })
                 .Build();
 

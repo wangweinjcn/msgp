@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Proxy.Comm;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace eurekaServer
@@ -33,11 +34,13 @@ namespace eurekaServer
 
 
         protected override IList<string> swaggerXmlList { get; set; }
-        protected override string appName { get { return "cbeLogisticsWeb"; } set => throw new NotImplementedException(); }
+        protected override string appName { get { return "msgp"; } set => throw new NotImplementedException(); }
         protected override string deverName { get { return "wangwei"; } set {; } }
         public override void initOtherServices(IServiceCollection services)
         {
-          //services.AddMvc().AddXmlSerializerFormatters();
+            var lrserver = localRunServer.Instance;
+            lrserver.startServer();
+            //services.AddMvc().AddXmlSerializerFormatters();
             //  services.AddTimedJob();
         }
         public override void initOtherConfig(IApplicationBuilder app, IHostingEnvironment env)

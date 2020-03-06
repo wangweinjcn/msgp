@@ -18,71 +18,57 @@ using System.Timers;
 namespace Proxy.Comm
 {
     using Ace;
+    using DotNetty.Transport.Bootstrapping;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
+    using FrmLib.Extend;
     using FrmLib.Http;
     using Microsoft.Extensions.Configuration;
     using Newtonsoft.Json.Linq;
+    using Proxy.Comm.model;
     using System.Linq;
     using System.Xml.Serialization;
     public partial class localRunServer
     {
          #region 方法
         
-        protected void checkAlive(Object state, System.Timers.ElapsedEventArgs e)
-        {
-            if (checkAliveNowDo)
-                return;
-            lock (checkAliveLockObj)
-            {
-                if (checkAliveNowDo)
-                    return;
-                checkAliveNowDo = true;
-            }
-            try
-            {
-                if (this.regionRole == ServerRoleEnum.regionMaster)
-                {
-                    regionCheckAlive();
-                }
-                if (this.zoneRole == ServerRoleEnum.zoneMaster)
-                {
-                    clusterCheckAlive();
-                }
-            }
-            finally
-            {
-                checkAliveNowDo = false;
-            }
-        }
+       
 
         private void regionCheckAlive()
         {
-            if (ownRegion == null ||ownRegion.regionMaster.id!=ownServer.id)
+            if (ownRegion == null || ownRegion.regionMaster==null ||ownRegion.regionMaster.id!=ownServer.id)
                 return;
-            checkOneServer(ownRegion.regionMaster);
-            checkOneServer(ownRegion.regionSlave);
-            foreach (var obj in ownRegion.zoneServer_dic.Values)
+            checkOneProxyServer(ownRegion.regionMaster);
+            checkOneProxyServer(ownRegion.regionSlave);
+            foreach (var obj in ownRegion.allZoneServerClusters())
             {
                 if (obj.master == null || obj.master.id == ownServer.id)
                     continue;
-                checkOneServer(obj.master);
+                checkOneProxyServer(obj.master);
 
 
             }
             
         }
+        
         /// <summary>
         /// 代理服务器监测转发服务组
         /// </summary>
-        private void checkMapGroup()
+        private void checkMapGroup(proxyNettyServer server)
         {
-
+            if (server.checkMapGroupChange())
+            {
+                actionMessage am = new actionMessage(enum_Actiondo.ServerChanged, ownServer.id, region, "", "", JsonConvert.SerializeObject(new { url = ownServer.serviceUrl, region = region, zone = zoneclusterId, id = server.id }));
+                addActions(am);
+            }
         }
         /// <summary>
-        /// 检查单台服务器，
+        /// 检查单台服务器，失联时间超过remove时间，移除并不在检查；小于移除时间大于失效时间，设置失效状态，但进行检查
         /// </summary>
         /// <param name="server"></param>
-        private void checkOneServer(proxyNettyServer server)
+        private void checkOneProxyServer(proxyNettyServer server)
         {
+           
             if (server == null)
                 return;
             if (server.id == ownServer.id)
@@ -91,37 +77,38 @@ namespace Proxy.Comm
                 return;
             var ts = (DateTime.Now - server.lastLive).TotalSeconds;
              var oldstatus = server.status;
-            if (ts > this.serverFailTimes)
-            {
-                var sid = _rsycClient.getEchoServerId(server.serviceUrl);
-               
-                if (sid == server.id)
-                {
-                    server.lastLive = DateTime.Now;
-                    server.setStatus(serverStatusEnum.Ready);
-                }
-                else
-                {
-                    server.setStatus(serverStatusEnum.Fail);
-
-                }
-
-            }
             if (ts > this.serverRemoveTimes)
             {
-                //
-                   server.setStatus(serverStatusEnum.Disable);
+                //should remove server
+                Console.WriteLine("checkOneProxyServer server set Disable ");
+                server.setStatus(serverStatusEnum.Disable);
             }
+            else
+            {
+                if (ts > this.serverFailTimes)
+                {
+                    var sid = _rsycClient.getEchoServerId(server.serviceUrl);
+                    if (sid == server.id)
+                    {
+                        Console.WriteLine("checkOneProxyServer server set ready ");
+                        server.lastLive = DateTime.Now;
+                        server.setStatus(serverStatusEnum.Ready);
+                    }
+                    else
+                    {
+                        Console.WriteLine("checkOneProxyServer server set fail ");
+                        server.setStatus(serverStatusEnum.Fail);
+
+                    }
+
+                }
+            }
+            
             if (oldstatus != server.status)
             {
-                if (this.regionRole == ServerRoleEnum.regionMaster)
-                {
-
-                }
-                if (this.zoneRole == ServerRoleEnum.zoneMaster)
-                {
-
-                }
+                Console.WriteLine("checkOneProxyServer server add actions ");
+                actionMessage am = new actionMessage(enum_Actiondo.ServerChanged, ownServer.id, region, "", "", JsonConvert.SerializeObject(new { url = ownServer.serviceUrl, region = region, zone = zoneclusterId, id = server.id }));
+                addActions(am);
             }
         }
         /// <summary>
@@ -154,16 +141,18 @@ namespace Proxy.Comm
         }
         private void clusterCheckAlive()
         {
+           
             if (ownCluster == null || ownCluster.master.id != ownServer.id)
                 return;
             if (ownCluster.slave != null)
             {
-                checkOneServer(ownCluster.slave);
+               
+                checkOneProxyServer(ownCluster.slave);
             }
             foreach (var obj in ownCluster.repetionList)
             {
 
-                checkOneServer(obj);
+                checkOneProxyServer(obj);
 
             }
         }
@@ -197,17 +186,17 @@ namespace Proxy.Comm
                 foreach (var one in waitforNextList)
                 {
                     var rzs = _rsycClient.getRegionFromRegionMaster(one.serviceUrl);
-                    if (rzs.zoneServer_dic.Count > zoneCount)
+                    if (rzs.zoneServerCount > zoneCount)
                     {
                         maxZoneCountServer = one;
                         maxrzs = rzs;
-                        zoneCount = rzs.zoneServer_dic.Count;
+                        zoneCount = rzs.zoneServerCount;
                         waitforNextList2.Clear();
                      
                     }
                     else
                     {
-                        if (rzs.zoneServer_dic.Count == zoneCount)
+                        if (rzs.zoneServerCount == zoneCount)
                         {
                             if (maxZoneCountServer.id == one.id)
                                 continue;//相同的server
@@ -410,7 +399,7 @@ namespace Proxy.Comm
             foreach (var obj in regionUrls)
             {
                 var rzs = _rsycClient.getClusterFromZoneMaster(obj);
-                if (rzs == null || (rzs.zoneName != this.zone && rzs.zoneName != "*") || rzs.master == null)
+                if (rzs == null || (rzs.clusterId != this.zoneclusterId && rzs.zoneName != "*") || rzs.master == null)
                     continue;
                 waitforList.Add(rzs.master);
             }
@@ -431,7 +420,7 @@ namespace Proxy.Comm
         /// <summary>
         /// 向主集群服务器报告心跳（集群从服务器或副本）
         /// </summary>
-        private void sayAliveToZoneMasterFunc(Object state, System.Timers.ElapsedEventArgs e)
+        private void triggerSayAliveToZoneMaster(Object state, System.Timers.ElapsedEventArgs e)
         {
             if (sayaliveNowDo)
                 return;
@@ -457,7 +446,7 @@ namespace Proxy.Comm
         /// <summary>
         /// 向主域服务器报告心跳（集群主服务器，非主域服务器）
         /// </summary>
-        private void sayAliveToRegionMasterFunc(Object state, System.Timers.ElapsedEventArgs e)
+        private void triggerSayAliveToRegionMaster(Object state, System.Timers.ElapsedEventArgs e)
         {
             if (sayaliveNowDo)
                 return;
@@ -479,12 +468,39 @@ namespace Proxy.Comm
                 sayaliveNowDo = false;
             }
         }
+        private void triggerCheckAlive(Object state, System.Timers.ElapsedEventArgs e)
+        {
+            if (checkAliveNowDo)
+                return;
+            lock (checkAliveLockObj)
+            {
+                if (checkAliveNowDo)
+                    return;
+                checkAliveNowDo = true;
+            }
+            try
+            {
+                if (this.regionRole == ServerRoleEnum.regionMaster)
+                {
+                    regionCheckAlive();
+                }
+                if (this.zoneRole == ServerRoleEnum.zoneMaster)
+                {
+                    clusterCheckAlive();
+                }
+                checkMapGroup(ownServer); //检查自己的转发服务器的存活
+            }
+            finally
+            {
+                checkAliveNowDo = false;
+            }
+        }
         /// <summary>
         /// actionMessage 处理器
         /// </summary>
         /// <param name="state"></param>
         /// <param name="e"></param>
-        private void actionMessageProcesser(Object state, System.Timers.ElapsedEventArgs e)
+        private void triggerActionMessageProcesser(Object state, System.Timers.ElapsedEventArgs e)
         {
             if (actionPNowDo)
                 return;
@@ -493,10 +509,18 @@ namespace Proxy.Comm
                 if (!actionPNowDo)
                     actionPNowDo = true;
             }
+            IList<actionMessage> processlist;
+            lock (messagesNeedAction)
+            {
+                processlist = messagesNeedAction;
+                messagesNeedAction = new List<actionMessage>();
+            }
+
             try {
-                while(messagesNeedAction.Count>0)
+                
+                while(processlist.Count>0)
                 {
-                    var one = messagesNeedAction[0];
+                    var one = processlist[0];
                     switch (one.action)
                     {
                         case (enum_Actiondo.noticeToRsycZoneMaster):
@@ -516,16 +540,57 @@ namespace Proxy.Comm
                             break;
                         case (enum_Actiondo.resetRegionZones):
                             break;
-
                         case (enum_Actiondo.serverAdd):
-                            break;
+                          
                         case (enum_Actiondo.ServerChanged):
+                            if (zoneRole != ServerRoleEnum.zoneMaster)
+                            {
+                                _rsycClient.reportMyChangeToMaster();
+                            }
                             break;
+
                         case (enum_Actiondo.serverRemove):
+                            break;
+                        case (enum_Actiondo.needNoticeServer):
+                            if (zoneRole == ServerRoleEnum.zoneMaster)
+                            {
+                                actionMessage am = new actionMessage(enum_Actiondo.needRsycOneServer, ownServer.id, region, null, null, one.messageParam);
+                                if (ownCluster.slave != null)
+                                    _rsycClient.noticeServerWithMessage(ownCluster.slave.serviceUrl, ownCluster.slave.id, am);
+                                foreach(var obj in ownCluster.repetionList)
+                                     _rsycClient.noticeServerWithMessage(obj.serviceUrl, obj.id, am);
+
+                                     
+                            }
+                            break;
+                        case (enum_Actiondo.needRsycOneServer):
+                            if (zoneRole != ServerRoleEnum.zoneMaster)
+                            {
+                                var jobj = JObject.Parse(one.messageParam);
+                                var url = jobj["url"].ToString();
+                                var region = jobj["region"].ToString();
+                                var zone = jobj["zone"].ToString();
+                                var id = jobj["id"].ToString();
+                                var newserver = _rsycClient.getServer(url, id, region, zone);
+                                if (newserver == null || newserver.id==ownServer.id)
+                                    return;
+                                var oldserver = ownCluster.getzoneServerById(newserver.id);
+                                if (oldserver != null)
+                                {
+                                    oldserver = newserver;
+                                }
+                                else
+                                {
+                                    if (ownCluster.slave == null)
+                                        ownCluster.setSlave(newserver);
+                                    else
+                                        ownCluster.addRepetion(newserver);
+                                }
+                            }
                             break;
 
                     }
-                    messagesNeedAction.Remove(one);
+                    processlist.Remove(one);
 
 }
             }
@@ -556,9 +621,9 @@ namespace Proxy.Comm
             else
             {
                 rzs =_rsycClient.getRegionFromRegionMaster(regionMaster.serviceUrl);
-                if (rzs.zoneServer_dic.ContainsKey(this.zone))
+                if (rzs.ContainsKey(this.zoneclusterId))
                 {
-                    var cluster = rzs.zoneServer_dic[this.zone];
+                    var cluster = rzs.getzoneServerCluster(this.zoneclusterId);
                     if (cluster != null && cluster.master != null)
                         zoneMaster = cluster.master;
                     else
@@ -575,7 +640,7 @@ namespace Proxy.Comm
              zoneMaster = getZoneMaster(zoneUrls);
             if (zoneMaster == null)
             {
-                if (rzs != null && rzs.zoneServer_dic.ContainsKey(this.zone))
+                if (rzs != null && rzs.ContainsKey(this.zoneclusterId))
                     throw new Exception("获取不到集群主服务器，但主域的信息中包含了集群的信息");
                 zoneRole = ServerRoleEnum.zoneMaster;
 
@@ -593,12 +658,11 @@ namespace Proxy.Comm
             {
                
                 //既是主域服务器也是主集群服务器
-                this.clusterId = (string.Format("{0}:{1}",region,zone)).ToMD5(); //集群Id，根据region和zone的字符串做md5得到；可保证唯一性
                 ownServer = new proxyNettyServer(this.clusterId, this.httpProxyPort, serviceUrl);
                 ownServer.loadPortProxyCfg();
                 regionZoneServer rz = new regionZoneServer(region);
-                rz.setMaster( ownServer);
-                rz.zoneServer_dic.Add(zone, new zoneServerCluster(region, zone, ownServer));
+                rz.addZoneServer(new zoneServerCluster(region, zone, ownServer));
+                rz.setMaster(ownServer);
                 this.region_dic.Add(region, rz);
                 RegionBroadCastTimer.Elapsed += new System.Timers.ElapsedEventHandler(broadCastForRegion);
                 RegionBroadCastTimer.AutoReset = true;
@@ -612,19 +676,19 @@ namespace Proxy.Comm
                     {
                         
                        
-                       this.clusterId = (string.Format("{0}:{1}",region,zone)).ToMD5();                        
+                                     
                         ownServer = new proxyNettyServer(this.clusterId, this.httpProxyPort, serviceUrl);
                          ownServer.loadPortProxyCfg();
                          zsc = new zoneServerCluster(this.region, this.zone, ownServer);                      
                         var jobj = _rsycClient.registerForRegionMaster(rzs);
                         if (jobj["status"].ToObject<int>()!=200)
                             throw new Exception("服务注册失败");
-                        rzs.zoneServer_dic.Add(this.zone, zsc);
+                        rzs.addZoneServer( zsc);
                         zsc.setMaster( ownServer);
                         this.region_dic.Add(this.region, rzs);
-                        keepAliveTimer.Elapsed += new System.Timers.ElapsedEventHandler(sayAliveToRegionMasterFunc);
-                        keepAliveTimer.AutoReset = true;
-                        keepAliveTimer.Start();
+                        sayAliveTimer.Elapsed += new System.Timers.ElapsedEventHandler(triggerSayAliveToRegionMaster);
+                        sayAliveTimer.AutoReset = true;
+                        sayAliveTimer.Start();
                     }
                     else
                     {
@@ -634,11 +698,11 @@ namespace Proxy.Comm
                         ownServer = new proxyNettyServer(this.clusterId, this.httpProxyPort, serviceUrl);
                         ownServer.loadPortProxyCfg();
                         var jobj = _rsycClient.registerForZoneMaster(zsc);
-                        if (jobj["status"].ToObject<int>() != 200)
+                        if (jobj["Status"].ToObject<int>() != 100)
                             throw new Exception("服务注册失败");
                         else
                         {
-                            if (jobj["data"]["serverType"].ToObject<int>() == (int)ServerRoleEnum.zoneSlave)
+                            if (jobj["Data"]["serverType"].ToObject<int>() == (int)ServerRoleEnum.zoneSlave)
                             {
                                 zsc.setSlave(ownServer);
                             }
@@ -646,10 +710,12 @@ namespace Proxy.Comm
                                 zsc.addRepetion( ownServer);
                         }
 
+                        rzs.addZoneServer(zsc);
+                        this.region_dic.Add(region, rzs);
 
-                        keepAliveTimer.Elapsed += new System.Timers.ElapsedEventHandler(sayAliveToZoneMasterFunc);
-                        keepAliveTimer.AutoReset = true;
-                        keepAliveTimer.Start();
+                        sayAliveTimer.Elapsed += new System.Timers.ElapsedEventHandler(triggerSayAliveToZoneMaster);
+                        sayAliveTimer.AutoReset = true;
+                        sayAliveTimer.Start();
                     }
                 }
                 else
@@ -662,7 +728,9 @@ namespace Proxy.Comm
 
             }
 
-                   actionDoTimer.Start();
+             actionDoTimer.Start();
+             checkAliveTimer.Start();
+            ownServer.Start();//启动自身的转发服务
         }
         private void initPcounter(IList<pCounter> perfCounters)
         {

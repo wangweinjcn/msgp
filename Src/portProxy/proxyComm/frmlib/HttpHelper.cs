@@ -173,7 +173,7 @@ namespace FrmLib.Http
 
         }
         /// <summary>
-        /// 使用jobject对象传递http请求,get会加到url上,post会以表单方式提交
+        /// 使用jobject对象传递http请求,get会加到url上,post会body正文json结构方式提交
         /// </summary>
         /// <param name="url"></param>
         /// <param name="postjson"></param>
@@ -184,18 +184,19 @@ namespace FrmLib.Http
         /// <returns></returns>
         public HttpResponseMessage doAsycHttpRequest(string url, JObject postjson, bool isGet = true, bool havessl = false, Dictionary<string, string> HeaderParam = null)
         {
-            string requestParams = null;
-            StringBuilder sb = new StringBuilder();
-            foreach (JToken child in postjson.Children())
-            {
-                var property1 = child as JProperty;
-                sb.Append(property1.Name + "=" + property1.Value+"&");
-               
-            }
-            requestParams = sb.ToString();
+           
 
             if (isGet)
             {
+                string requestParams = null;
+                StringBuilder sb = new StringBuilder();
+                foreach (JToken child in postjson.Children())
+                {
+                    var property1 = child as JProperty;
+                    sb.Append(property1.Name + "=" + property1.Value + "&");
+
+                }
+                requestParams = sb.ToString();
                 string geturl = url;
                 if (!string.IsNullOrEmpty(requestParams))
                 {
@@ -207,22 +208,25 @@ namespace FrmLib.Http
             }
             else
             {
+
                 string contenttype = "";
-                if (HeaderParam!=null && HeaderParam.Keys.Contains("Content-Type", StringComparer.OrdinalIgnoreCase))
+                if (HeaderParam != null && HeaderParam.Keys.Contains("Content-Type", StringComparer.OrdinalIgnoreCase))
                 {
                     HeaderParam.TryGetValue("Content-Type", out contenttype);
+                    contenttype = "application/json";
                 }
                 else
                 {
-                    contenttype = "application/json";
+                     contenttype = "application/json";
+                    if (HeaderParam == null)
+                        HeaderParam = new Dictionary<string, string>();
+                    HeaderParam.Add("Content-Type",contenttype);
                 }
+              
+
+                
                 HttpContent content = null;
-                if (!string.IsNullOrEmpty(requestParams))
-                {
-
-                    content = new StringContent(requestParams, Encoding.UTF8, contenttype);
-
-                }
+                content = new StringContent(postjson.ToString(), Encoding.UTF8, contenttype);
 
                 return this.doAsycHttpRequest(url, content, "Post", havessl, HeaderParam);
             }

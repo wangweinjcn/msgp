@@ -39,7 +39,7 @@ namespace Proxy.Comm
         {
             Configuration = new ConfigurationBuilder()
                 .SetBasePath(ProcessDirectory)
-                .AddJsonFile("appsettings.json")
+                .AddJsonFile("configs/appsettings.json")
                 .Build();
         }
 

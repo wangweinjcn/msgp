@@ -111,15 +111,15 @@ namespace eurekaServer.Areas.Controllers
             var ins = prepareInstance();
             ins.appName = appid;
             mapPortGroup mpg = null;
-            if (localRunServer.Instance.ownServer.maphttpGroup_dic.ContainsKey(ins.appName))
+            if (localRunServer.Instance.ownServer.httpGroupContainKey(ins.appName))
             {
-                mpg = localRunServer.Instance.ownServer.maphttpGroup_dic[ins.appName];
+                mpg = localRunServer.Instance.ownServer.getHttpGroupByKey(ins.appName);
             }
             else
             {
-                mpg = new mapPortGroup("127.0.0.1", "0", ins.appName, -1, outPortSelectPolicy.fastResponse, localRunServer.Instance.clusterId, true);
+                mpg = new mapPortGroup("127.0.0.1", "0", ins.appName, -1, outPortSelectPolicy.fastResponse, localRunServer.Instance.ownServer, 1,true);
                 mpg.addOutPort(ins.ipAddr, ins.port.ToString(), null, -1,  true);
-                localRunServer.Instance.ownServer.maphttpGroup_dic.Add(ins.appName, mpg);
+                localRunServer.Instance.ownServer.addMapGroup( mpg);
             }
             return noContentStatus(HttpStatusCode.NoContent);
         }

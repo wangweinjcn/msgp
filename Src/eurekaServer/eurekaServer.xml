@@ -4,9 +4,85 @@
         <name>eurekaServer</name>
     </assembly>
     <members>
+        <member name="T:eurekaServer.Areas.Controllers.gServerController">
+            <summary>
+            euraka RestApi服务控制器
+            </summary>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext)">
+            <summary>
+            
+            </summary>
+            <param name="filterContext"></param>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.sayAliveToRegionMaster(System.String,System.String)">
+            <summary>
+            向主域服务器报告心跳
+            </summary>
+            <param name="sid">报告心跳的zoneMaster</param>
+            <param name="regionName">报告的主域名称</param>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.sayAliveToZoneMaster(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.echoFor">
+            <summary>
+            响应请求，返回当前服务器的Id
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.registerToZoneMaster(Proxy.Comm.model.proxyNettyServer)">
+            <summary>
+            向集群主控服务器注册
+            </summary>
+            <param name="server"></param>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.registerToRegionMaster(Proxy.Comm.model.zoneServerCluster)">
+            <summary>
+            
+            </summary>
+            <param name="zsc"></param>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.reportServerChanged(System.String,Proxy.Comm.model.proxyNettyServer)">
+            <summary>
+            集群内服务器向master提交自己变更信息
+            </summary>
+            <param name="id"></param>
+            <param name="am"></param>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.NoticeServer(System.String,Proxy.Comm.model.actionMessage)">
+            <summary>
+            
+            </summary>
+            <param name="id">被通知server的Id</param>
+            <param name="am">通知消息</param>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.zone(System.String)">
+            <summary>
+            获取当前zone的集群信息，请求的服务器应该和当前访问器是同一个region
+            </summary>
+            <param name="zoneName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:eurekaServer.Areas.Controllers.gServerController.region(System.String)">
+            <summary>
+            获取整个区域的集群信息
+            </summary>
+            <param name="regionName">区域名</param>
+            <returns></returns>
+        </member>
         <member name="T:eurekaServer.Areas.Controllers.appsController">
             <summary>
-            跨境仓库对接销售平台请求控制器
+            euraka RestApi服务控制器
             </summary>
         </member>
         <member name="M:eurekaServer.Areas.Controllers.appsController.OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext)">

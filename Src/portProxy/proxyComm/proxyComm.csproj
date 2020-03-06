@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>proxy.Comm</RootNamespace>
+    <RootNamespace>Proxy.Comm</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

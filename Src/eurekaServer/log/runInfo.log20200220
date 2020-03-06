@@ -1,0 +1,49 @@
+2020-02-20 08:37:00,196 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 08:39:21,700 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 08:41:59,893 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 08:43:40,535 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 08:43:41,612 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 08:49:18,879 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 08:49:19,992 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 08:50:54,509 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 08:50:55,634 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 10:27:03,870 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 10:27:04,900 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 10:32:04,138 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 10:32:05,149 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 13:31:42,872 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 13:31:45,064 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 13:32:46,793 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 13:32:47,852 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 13:34:17,680 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 13:34:18,669 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 13:43:04,148 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 13:43:05,234 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 13:50:31,047 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 13:50:32,028 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 13:57:27,122 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 13:57:28,126 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:02:29,855 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 14:02:30,910 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:10:50,479 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 14:10:51,572 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:29:45,942 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 14:29:46,998 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:32:32,995 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 14:32:33,991 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:32:57,217 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 14:32:58,170 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:42:23,749 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:43:33,029 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:44:33,437 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:46:27,796 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:49:49,859 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:51:07,456 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 14:59:00,719 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 14:59:46,616 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 15:05:18,942 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 15:12:33,014 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 15:21:00,824 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 15:25:08,366 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-02-20 15:41:43,137 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-02-20 15:48:10,828 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090

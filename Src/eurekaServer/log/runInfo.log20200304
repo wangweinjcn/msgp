@@ -1,0 +1,74 @@
+2020-03-04 14:33:21,672 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:33:23,903 [1] FATAL runInfo [(null)] - [.ctor:291@localRunServer.cs]init system error;
+The type initializer for 'Proxy.Comm.commSetting' threw an exception.
+2020-03-04 14:33:27,471 [1] FATAL runInfo [(null)] - [.ctor:291@localRunServer.cs]init system error;
+The type initializer for 'Proxy.Comm.commSetting' threw an exception.
+2020-03-04 14:33:45,359 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:33:46,646 [1] FATAL runInfo [(null)] - [.ctor:291@localRunServer.cs]init system error;
+The type initializer for 'Proxy.Comm.commSetting' threw an exception.
+2020-03-04 14:35:21,477 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:37:14,144 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:38:27,519 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:41:25,848 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:45:39,629 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:48:07,559 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:55:07,813 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:55:15,840 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 14:56:44,663 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 14:56:54,410 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 15:21:21,966 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 15:21:24,109 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 15:23:16,921 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 15:23:19,309 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 15:24:08,126 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 15:24:10,773 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 15:27:25,441 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 15:27:27,572 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 16:48:59,542 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 16:51:40,382 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 16:53:58,759 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 16:56:05,853 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 16:57:44,729 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 17:00:13,964 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 17:00:19,733 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 17:01:57,724 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 17:02:00,099 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 18:29:15,279 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 18:29:18,278 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 20:28:15,211 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:28:45,847 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 20:29:23,072 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:30:49,698 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 20:33:42,035 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:38:25,212 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:40:57,978 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:42:43,971 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:43:55,179 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:46:07,778 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:48:15,656 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:49:44,239 [1] ERROR runInfo [(null)] - [registerForZoneMaster:287@serverFuncHttpUtils.cs]server 81481285BAD297E2791FB0E2C2BADA9A registerForZoneMaster http://192.168.3.103:9002 error ,resopne:StatusCode: 400, ReasonPhrase: 'Bad Request', Version: 1.1, Content: System.Net.Http.HttpConnection+HttpConnectionResponseContent, Headers:
+{
+  Date: Wed, 04 Mar 2020 12:49:43 GMT
+  Server: Kestrel
+  Transfer-Encoding: chunked
+  Content-Type: application/json; charset=utf-8
+}
+2020-03-04 20:51:16,381 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:51:55,841 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:52:27,233 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:54:11,712 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 20:58:01,402 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:02:50,806 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:05:55,993 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:15:23,612 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:20:09,758 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:20:16,880 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 21:21:10,570 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:25:50,606 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:26:53,982 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:27:13,363 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:28:16,535 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:28:34,818 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
+2020-03-04 21:34:12,611 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:42:22,245 [1] INFO  runInfo [(null)] -  [ConfigureServices:?@baseStartup]now configure main service
+2020-03-04 21:42:42,749 [1] DEBUG runInfo [(null)] -  [Configure:?@baseStartup]http://localhost:8080,http://localhost:8090
